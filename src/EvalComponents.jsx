@@ -414,38 +414,33 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
               <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase">{clip.slug}.mp4</span>
             </div>
 
-            {/* Video row — 2-col for bigger clips */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-              {compareModels.map(model => (
-                <EvalVideoCard
-                  key={model.id}
-                  src={`${subject.path}/${model.id}/${clip.slug}.mp4`}
-                  model={model}
-                  videoRef={(el) => { videoRefs.current[model.id] = el; }}
-                />
-              ))}
-            </div>
-
-            {/* Rating sections — 2-col aligned with videos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6 border-t border-slate-100">
+            {/* Models + Ratings (grouped) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-6">
               {compareModels.map(model => {
                 const allDone = metrics.every(mt => ratings[`${subject.id}__${clip.slug}__${model.id}__${mt.key}`]);
                 return (
-                  <div key={model.id} className={`rounded-3xl border p-5 space-y-4 transition-all ${allDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-100 bg-slate-50/50'}`}>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-black uppercase tracking-wide text-${model.color}-600 flex items-center gap-1.5`}>
-                        <span>{model.icon}</span> {model.name}
-                      </span>
-                      {allDone && <CheckCircle2 size={14} className="text-emerald-500" />}
+                  <div key={model.id} className="flex flex-col gap-4">
+                    <EvalVideoCard
+                      src={`${subject.path}/${model.id}/${clip.slug}.mp4`}
+                      model={model}
+                      videoRef={(el) => { videoRefs.current[model.id] = el; }}
+                    />
+                    <div className={`flex-grow rounded-3xl border p-5 space-y-4 transition-all ${allDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-100 bg-slate-50/50'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-black uppercase tracking-wide text-${model.color}-600 flex items-center gap-1.5`}>
+                          <span>{model.icon}</span> {model.name}
+                        </span>
+                        {allDone && <CheckCircle2 size={14} className="text-emerald-500" />}
+                      </div>
+                      {metrics.map(metric => (
+                        <RatingRow key={metric.key}
+                          speakerId={subject.id} clipSlug={clip.slug} modelId={model.id}
+                          metric={metric}
+                          value={ratings[`${subject.id}__${clip.slug}__${model.id}__${metric.key}`]}
+                          onChange={onRate}
+                        />
+                      ))}
                     </div>
-                    {metrics.map(metric => (
-                      <RatingRow key={metric.key}
-                        speakerId={subject.id} clipSlug={clip.slug} modelId={model.id}
-                        metric={metric}
-                        value={ratings[`${subject.id}__${clip.slug}__${model.id}__${metric.key}`]}
-                        onChange={onRate}
-                      />
-                    ))}
                   </div>
                 );
               })}
