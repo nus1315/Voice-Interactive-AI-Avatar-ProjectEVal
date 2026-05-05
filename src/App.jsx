@@ -160,6 +160,22 @@ const App = () => {
   const [showLogin, setShowLogin]     = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Google Sheets Auto-Sync
+  const GOOGLE_WEBAPP_URL = import.meta.env.VITE_GOOGLE_WEBAPP_URL;
+  const sendDataToGoogleSheet = (payload) => {
+    if (!GOOGLE_WEBAPP_URL) return;
+    try {
+      fetch(GOOGLE_WEBAPP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      console.error('Failed to sync to Google Sheets', e);
+    }
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('v2l_research_v2');
     if (saved) setHistory(JSON.parse(saved));
@@ -172,6 +188,16 @@ const App = () => {
     const updated = [...voteHistory, entry];
     setVoteHistory(updated);
     localStorage.setItem('v2l_votes_v1', JSON.stringify(updated));
+
+    // Send to Google Sheets
+    const subjectId = clip.split('__')[0] || '';
+    sendDataToGoogleSheet({
+      type: 'vote',
+      timestamp: entry.timestamp,
+      clip: clip,
+      winner: winnerId,
+      subjectId: subjectId
+    });
   };
 
   // ── Rating handlers ──────────────────────────────────────────────────────
@@ -186,6 +212,14 @@ const App = () => {
     const updated = [...history, entry];
     setHistory(updated);
     localStorage.setItem('v2l_research_v2', JSON.stringify(updated));
+    
+    // Send to Google Sheets
+    sendDataToGoogleSheet({
+      type: 'eval',
+      timestamp: entry.timestamp,
+      ratings: entry.data
+    });
+
     setSubmitted(true);
     setRatings({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
