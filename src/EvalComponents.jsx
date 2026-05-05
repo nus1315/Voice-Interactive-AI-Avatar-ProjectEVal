@@ -257,15 +257,6 @@ const EvalVideoCard = ({ src, model, videoRef: externalRef }) => {
         />
       </div>
 
-      {/* Controls overlay bottom-left */}
-      <div className="absolute bottom-3 left-3 z-10 flex gap-2">
-        <button onClick={toggle} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
-          {playing ? <Pause size={14} fill="white" /> : <Play size={14} fill="white" />}
-        </button>
-        <button onClick={reset} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
-          <RotateCcw size={14} />
-        </button>
-      </div>
     </motion.div>
   );
 };
