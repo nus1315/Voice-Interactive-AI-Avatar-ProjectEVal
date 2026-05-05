@@ -25,9 +25,16 @@ export const AnalyticsTab = ({
     let csv = 'Timestamp,SpeakerID,SpeakerName,Gender,Clip,Model,Metric,Score\n';
     history.forEach(entry => {
       Object.entries(entry.data).forEach(([key, val]) => {
-        const [sid, clip, mk] = key.split('__');
-        const sp = speakers.find(s => s.id === sid);
-        csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},Ditto,${mk},${val}\n`;
+        const parts = key.split('__');
+        if (parts.length === 4) {
+          const [sid, clip, modelId, mk] = parts;
+          const sp = speakers.find(s => s.id === sid);
+          csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},${modelId},${mk},${val}\n`;
+        } else {
+          const [sid, clip, mk] = parts;
+          const sp = speakers.find(s => s.id === sid);
+          csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},Ditto,${mk},${val}\n`;
+        }
       });
     });
     return csv;
@@ -51,7 +58,8 @@ export const AnalyticsTab = ({
     metrics.forEach(m => { agg[m.key] = { total: 0, count: 0 }; });
     history.forEach(entry => {
       Object.entries(entry.data).forEach(([key, val]) => {
-        const mk = key.split('__')[2];
+        const parts = key.split('__');
+        const mk = parts[parts.length - 1];
         if (agg[mk]) { agg[mk].total += val; agg[mk].count++; }
       });
     });

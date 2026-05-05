@@ -18,7 +18,7 @@ import {
   AlertTriangle,
   Trophy
 } from 'lucide-react';
-import { speakers, metrics } from './data.js';
+import { speakers, metrics, compareModels } from './data.js';
 import { EvaluationTab, CompareTab } from './EvalComponents.jsx';
 import { AnalyticsTab } from './AnalyticsTab.jsx';
 import { ResearchTab } from './ResearchTab.jsx';
@@ -177,7 +177,7 @@ const App = () => {
   // ── Rating handlers ──────────────────────────────────────────────────────
   const handleRating = (key, val) => setRatings(prev => ({ ...prev, [key]: val }));
 
-  const totalRequired = speakers.reduce((acc, sp) => acc + sp.clips.length * metrics.length, 0);
+  const totalRequired = speakers.reduce((acc, sp) => acc + sp.clips.length * compareModels.length * metrics.length, 0);
   const progress = (Object.keys(ratings).length / totalRequired) * 100;
 
   const handleSubmit = (e) => {

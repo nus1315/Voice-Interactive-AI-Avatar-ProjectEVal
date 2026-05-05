@@ -126,8 +126,8 @@ export const VideoCard = ({ src, label, emoji }) => {
 };
 
 // ─── RatingRow ────────────────────────────────────────────────────────────────
-export const RatingRow = ({ speakerId, clipSlug, metric, value, onChange }) => {
-  const rk = `${speakerId}__${clipSlug}__${metric.key}`;
+export const RatingRow = ({ speakerId, clipSlug, modelId, metric, value, onChange }) => {
+  const rk = `${speakerId}__${clipSlug}__${modelId}__${metric.key}`;
   const cols = {
     indigo: { active: 'bg-indigo-600 border-indigo-600 shadow-indigo-200', hover: 'hover:border-indigo-200 hover:text-indigo-600' },
     violet: { active: 'bg-violet-600 border-violet-600 shadow-violet-200', hover: 'hover:border-violet-200 hover:text-violet-600' },
@@ -260,14 +260,26 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
                     <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-sm font-black shadow">{cIdx + 1}</div>
                     <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest">{clip.emoji} {clip.label}</h4>
                     <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase tracking-widest">{clip.slug}.mp4</span>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded-md ml-2">Model: Ditto</span>
                   </div>
-                  <VideoCard src={`${speaker.path}/ditto/${clip.slug}.mp4`} label={clip.label} emoji={clip.emoji} />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
-                    {metrics.map(metric => (
-                      <RatingRow key={metric.key} speakerId={speaker.id} clipSlug={clip.slug}
-                        metric={metric} value={ratings[`${speaker.id}__${clip.slug}__${metric.key}`]}
-                        onChange={onRate} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-4">
+                    {compareModels.map(model => (
+                      <div key={model.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-${model.color}-100 text-${model.color}-700 flex items-center gap-1.5`}>
+                            <span>{model.icon}</span> {model.name}
+                          </span>
+                        </div>
+                        <div className="p-4 flex-grow space-y-6">
+                          <VideoCard src={`${speaker.path}/${model.id}/${clip.slug}.mp4`} label={model.name} emoji={model.icon} />
+                          <div className="space-y-4 pt-4 border-t border-slate-100">
+                            {metrics.map(metric => (
+                              <RatingRow key={metric.key} speakerId={speaker.id} clipSlug={clip.slug} modelId={model.id}
+                                metric={metric} value={ratings[`${speaker.id}__${clip.slug}__${model.id}__${metric.key}`]}
+                                onChange={onRate} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
