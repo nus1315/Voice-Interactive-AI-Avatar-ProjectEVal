@@ -5,7 +5,8 @@ import {
   ThumbsUp, Crown, Star, Trophy, SlidersHorizontal,
   CheckCircle2, ChevronRight, BarChart3,
 } from 'lucide-react';
-import { speakers, metrics, commonClips } from './data.js';
+import { speakers, metrics, commonClips, compareModels, compareSubjects, BASE } from './data.js';
+
 
 // ─── VideoCard ────────────────────────────────────────────────────────────────
 export const VideoCard = ({ src, label, emoji }) => {
@@ -205,39 +206,147 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
   );
 };
 
+// ─── ModelVideoCard (Compare tab — muted, model-labelled) ─────────────────────
+const ModelVideoCard = ({ src, model, isWinner, voted, rank, videoRef: externalRef }) => {
+  const internalRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const setRef = (el) => {
+    internalRef.current = el;
+    if (typeof externalRef === 'function') externalRef(el);
+  };
+
+  const toggle = () => {
+    const v = internalRef.current; if (!v) return;
+    if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
+  };
+  const reset = () => {
+    const v = internalRef.current; if (!v) return;
+    v.currentTime = 0; v.pause(); setPlaying(false);
+  };
+
+  const colorMap = {
+    blue:   { ring: 'border-blue-400',   shadow: 'shadow-blue-200/60',   badge: 'bg-blue-600',   winner: 'shadow-blue-200' },
+    violet: { ring: 'border-violet-400', shadow: 'shadow-violet-200/60', badge: 'bg-violet-600', winner: 'shadow-violet-200' },
+    rose:   { ring: 'border-rose-400',   shadow: 'shadow-rose-200/60',   badge: 'bg-rose-600',   winner: 'shadow-rose-200' },
+  };
+  const c = colorMap[model.color] || colorMap.blue;
+
+  return (
+    <motion.div layout className={`relative rounded-3xl overflow-hidden bg-slate-900 border-2 transition-all duration-500 ${
+      isWinner
+        ? `${c.ring} shadow-2xl ${c.shadow} scale-[1.02]`
+        : voted ? 'border-slate-700 opacity-60'
+        : 'border-white/10 hover:border-white/30 hover:shadow-xl'
+    }`}>
+      {isWinner && (
+        <motion.div initial={{ scale: 0, y: -20 }} animate={{ scale: 1, y: 0 }}
+          className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+          <div className="bg-amber-400 text-amber-900 rounded-full px-4 py-1.5 flex items-center gap-1.5 shadow-lg font-black text-xs uppercase tracking-wider">
+            <Crown size={14} fill="currentColor" /> Best Lip Sync!
+          </div>
+        </motion.div>
+      )}
+      {voted && rank && (
+        <div className="absolute top-3 left-3 z-10 bg-black/70 text-white text-xs font-black px-2.5 py-1 rounded-full backdrop-blur-sm">#{rank}</div>
+      )}
+
+      {/* Video — always muted */}
+      <video
+        ref={setRef}
+        src={src}
+        muted
+        className="w-full aspect-video object-cover"
+        preload="metadata"
+        onEnded={() => setPlaying(false)}
+      />
+
+      <div className="absolute inset-0 flex flex-col justify-between p-3 bg-gradient-to-t from-black/70 via-transparent to-black/30">
+        {/* Top: Model badge */}
+        <div className="flex items-start justify-between">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-2xl backdrop-blur-sm bg-gradient-to-r ${model.gradient} shadow-lg`}>
+            <span className="text-base">{model.icon}</span>
+            <div>
+              <div className="text-white text-xs font-black leading-tight">{model.name}</div>
+              <div className="text-white/70 text-[10px] font-semibold leading-tight">{model.venue}</div>
+            </div>
+          </div>
+          <div className="bg-black/60 text-white/60 text-[9px] font-black px-2 py-1 rounded-full backdrop-blur-sm uppercase tracking-wider flex items-center gap-1">
+            <VolumeX size={9} /> Muted
+          </div>
+        </div>
+
+        {/* Bottom: controls + model desc */}
+        <div className="space-y-2">
+          <div className="text-white/50 text-[10px] font-medium px-1">{model.desc}</div>
+          <div className="flex gap-2">
+            <button onClick={toggle} className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full transition-all">
+              {playing ? <Pause size={14} fill="white" /> : <Play size={14} fill="white" />}
+            </button>
+            <button onClick={reset} className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2 rounded-full transition-all">
+              <RotateCcw size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 // ─── CompareTab ───────────────────────────────────────────────────────────────
 export const CompareTab = ({ voteHistory, onVote }) => {
-  const [selectedClip, setSelectedClip] = useState(commonClips[0].slug);
-  const [voted, setVoted] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState(compareSubjects[0].id);
+  const [selectedClip,    setSelectedClip]    = useState('01_opening');
+  const [voted,  setVoted]  = useState(false);
   const [winner, setWinner] = useState(null);
   const videoRefs = useRef({});
-  const clip = commonClips.find(c => c.slug === selectedClip);
-  const available = speakers.filter(sp => sp.clips.some(c => c.slug === selectedClip));
 
+  const subject = compareSubjects.find(s => s.id === selectedSubject);
+  const clip    = subject?.clips.find(c => c.slug === selectedClip);
+
+  const changeSubject = (id) => {
+    Object.values(videoRefs.current).forEach(v => v?.pause());
+    const subj = compareSubjects.find(s => s.id === id);
+    setSelectedSubject(id);
+    setSelectedClip(subj?.clips[0]?.slug || '01_opening');
+    setVoted(false); setWinner(null);
+  };
   const changeClip = (slug) => {
     Object.values(videoRefs.current).forEach(v => v?.pause());
     setSelectedClip(slug); setVoted(false); setWinner(null);
   };
-  const playAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.play(); } });
+  const playAll  = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.play(); } });
   const pauseAll = () => Object.values(videoRefs.current).forEach(v => v?.pause());
   const resetAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.pause(); } });
-  const handleVote = (id) => { setWinner(id); setVoted(true); onVote(selectedClip, id); };
+
+  const voteKey = `${selectedSubject}__${selectedClip}`;
+  const handleVote = (modelId) => { setWinner(modelId); setVoted(true); onVote(voteKey, modelId); };
 
   const tally = {};
-  voteHistory.filter(v => v.clip === selectedClip).forEach(v => { tally[v.winner] = (tally[v.winner] || 0) + 1; });
+  voteHistory.filter(v => v.clip === voteKey).forEach(v => { tally[v.winner] = (tally[v.winner] || 0) + 1; });
   const totalVotes = Object.values(tally).reduce((a, b) => a + b, 0);
+
+  const modelVideoSrc = (modelId) => {
+    if (!subject) return '';
+    const gType = subject.genderType;
+    return `${BASE}/${gType}_teacher/${subject.folder}/${modelId}/${selectedClip}.mp4`;
+  };
 
   return (
     <motion.div key="compare" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-8">
+      {/* Header */}
       <header className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5"><Trophy size={120} className="text-amber-500" /></div>
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div>
             <div className="flex items-center gap-3 text-amber-600 font-bold text-xs mb-3 uppercase tracking-widest">
-              <SlidersHorizontal size={15} /><span>Side-by-Side · Play All · Vote Best</span><Star size={13} fill="currentColor" />
+              <SlidersHorizontal size={15} /><span>Model Comparison · Same Audio · Lip Sync Focus</span><Star size={13} fill="currentColor" />
             </div>
-            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Face Comparison</h1>
-            <p className="text-slate-500 mt-3 text-base font-medium">เล่นวิดีโอของผู้พูดทุกคนพร้อมกัน แล้วเลือกอันที่ดีที่สุด</p>
+            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Model Comparison</h1>
+            <p className="text-slate-500 mt-3 text-base font-medium">เปรียบเทียบการขยับปากของแต่ละโมเดล — เสียงเดียวกัน ปิดเสียง เน้นดูลิปซิงค์</p>
+            <div className="flex items-center gap-2 mt-3 text-xs text-slate-400 font-semibold">
+              <VolumeX size={14} className="text-slate-400" />
+              <span>วิดีโอทุกตัวปิดเสียงโดยอัตโนมัติ เพื่อเน้นการเปรียบเทียบการขยับปาก</span>
+            </div>
           </div>
           <div className="flex gap-3">
             <button onClick={playAll} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">
@@ -253,40 +362,100 @@ export const CompareTab = ({ voteHistory, onVote }) => {
         </div>
       </header>
 
+      {/* Model legend bar */}
+      <div className="grid grid-cols-3 gap-4">
+        {compareModels.map(m => (
+          <div key={m.id} className={`flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r ${m.gradient} text-white shadow-lg`}>
+            <span className="text-2xl">{m.icon}</span>
+            <div>
+              <div className="font-black text-sm">{m.name}</div>
+              <div className="text-white/70 text-[10px] font-semibold">{m.venue}</div>
+              <div className="text-white/60 text-[10px] mt-0.5">{m.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Speaker selector */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Select Clip Scenario</p>
-        <div className="flex flex-wrap gap-3">
-          {commonClips.map(c => (
-            <button key={c.slug} onClick={() => changeClip(c.slug)}
-              className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${
-                selectedClip === c.slug
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200'
-                  : 'bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-700 border border-slate-200'
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">
+          <User size={12} className="inline mr-1.5 mb-0.5" />Select Speaker
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {compareSubjects.map(s => (
+            <button key={s.id} onClick={() => changeSubject(s.id)}
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl font-black text-xs transition-all ${
+                selectedSubject === s.id
+                  ? s.gender === 'Female'
+                    ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-200'
+                    : 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200'
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
               }`}>
-              <span>{c.emoji}</span> {c.label}
+              <span className="text-lg">{s.gender === 'Female' ? '👩' : '👨'}</span>
+              <span>{s.name}</span>
+              <span className={`text-[9px] font-semibold ${selectedSubject === s.id ? 'text-white/70' : 'text-slate-400'}`}>
+                {s.gender}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className={`grid gap-6 ${available.length <= 2 ? 'grid-cols-1 md:grid-cols-2' : available.length === 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
-        {available.map((sp) => {
-          const isWinner = voted && winner === sp.id;
+      {/* Clip selector */}
+      {subject && (
+        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Select Clip Scenario</p>
+          <div className="flex flex-wrap gap-3">
+            {subject.clips.map(c => (
+              <button key={c.slug} onClick={() => changeClip(c.slug)}
+                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${
+                  selectedClip === c.slug
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200'
+                    : 'bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-700 border border-slate-200'
+                }`}>
+                <span>{c.emoji}</span> {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Now showing banner */}
+      {subject && clip && (
+        <div className="flex items-center gap-4 px-6 py-4 bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl text-white">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-black bg-gradient-to-br ${subject.gender === 'Female' ? 'from-pink-500 to-rose-600' : 'from-blue-500 to-indigo-600'}`}>
+            {subject.gender === 'Female' ? '👩' : '👨'}
+          </div>
+          <div>
+            <div className="font-black text-sm">{subject.name} · {clip.emoji} {clip.label}</div>
+            <div className="text-white/50 text-[11px]">เสียงเดียวกัน 3 โมเดล — ดูการขยับปาก</div>
+          </div>
+          <div className="ml-auto flex items-center gap-1.5 text-white/40 text-xs font-bold">
+            <VolumeX size={13} /> Silent Mode
+          </div>
+        </div>
+      )}
+
+      {/* 3 model videos side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {compareModels.map(model => {
+          const isWinner = voted && winner === model.id;
           const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
-          const rank = voted && tally[sp.id] ? sorted.findIndex(([id]) => id === sp.id) + 1 : null;
+          const rank = voted && tally[model.id] ? sorted.findIndex(([id]) => id === model.id) + 1 : null;
           return (
-            <div key={sp.id} className="space-y-4 pt-5">
-              <SyncVideoCard src={`${sp.path}/${selectedClip}.mp4`} speaker={sp}
-                isWinner={isWinner} voted={voted} rank={rank}
-                videoRef={el => { videoRefs.current[sp.id] = el; }} />
+            <div key={model.id} className="space-y-4 pt-5">
+              <ModelVideoCard
+                src={modelVideoSrc(model.id)}
+                model={model}
+                isWinner={isWinner}
+                voted={voted}
+                rank={rank}
+                videoRef={el => { videoRefs.current[model.id] = el; }}
+              />
               {!voted ? (
-                <button onClick={() => handleVote(sp.id)}
-                  className={`w-full py-4 rounded-2xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${
-                    sp.gender === 'Male'
-                      ? 'bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border border-blue-200 hover:shadow-lg'
-                      : 'bg-pink-50 text-pink-700 hover:bg-pink-600 hover:text-white border border-pink-200 hover:shadow-lg'
-                  }`}>
-                  <ThumbsUp size={16} /> เลือกอันนี้
+                <button onClick={() => handleVote(model.id)}
+                  className={`w-full py-4 rounded-2xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2 bg-gradient-to-r ${model.gradient} text-white shadow-lg hover:opacity-90`}>
+                  <ThumbsUp size={16} /> เลือก {model.name}
                 </button>
               ) : (
                 <div className={`w-full py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 ${isWinner ? 'bg-amber-50 text-amber-700 border-2 border-amber-400' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
@@ -298,6 +467,7 @@ export const CompareTab = ({ voteHistory, onVote }) => {
         })}
       </div>
 
+      {/* Vote results */}
       {totalVotes > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
@@ -306,28 +476,29 @@ export const CompareTab = ({ voteHistory, onVote }) => {
               <Trophy size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-black text-slate-900">ผลโหวต — {clip?.emoji} {clip?.label}</h3>
+              <h3 className="font-black text-slate-900">ผลโหวต — {subject?.name} · {clip?.emoji} {clip?.label}</h3>
               <p className="text-xs text-slate-400 font-bold">{totalVotes} session{totalVotes !== 1 ? 's' : ''} voted</p>
             </div>
           </div>
           <div className="space-y-4">
-            {Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([id, count], i) => {
-              const sp = speakers.find(s => s.id === id);
+            {Object.entries(tally).sort((a, b) => b[1] - a[1]).map(([modelId, count], i) => {
+              const m = compareModels.find(m => m.id === modelId);
               const pct = Math.round((count / totalVotes) * 100);
-              const barColor = i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-slate-400' : 'bg-orange-300';
+              const barColors = ['bg-amber-400', 'bg-slate-400', 'bg-orange-300'];
               return (
-                <div key={id}>
+                <div key={modelId}>
                   <div className="flex justify-between items-center mb-1.5">
                     <div className="flex items-center gap-2">
                       {i === 0 && <Crown size={14} className="text-amber-500" fill="currentColor" />}
-                      <span className="font-black text-sm text-slate-800">{sp?.name ?? id}</span>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${sp?.gender === 'Male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>{sp?.gender}</span>
+                      <span className="text-xl">{m?.icon}</span>
+                      <span className="font-black text-sm text-slate-800">{m?.name ?? modelId}</span>
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${m?.badgeBg} ${m?.badgeText}`}>{m?.venue}</span>
                     </div>
                     <span className="text-sm font-black text-slate-600">{pct}% ({count})</span>
                   </div>
                   <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: 'easeOut' }}
-                      className={`h-full rounded-full ${barColor}`} />
+                      className={`h-full rounded-full ${barColors[i] || 'bg-slate-300'}`} />
                   </div>
                 </div>
               );
@@ -339,9 +510,11 @@ export const CompareTab = ({ voteHistory, onVote }) => {
       <div className="bg-gradient-to-r from-indigo-50 to-violet-50 rounded-[2rem] border border-indigo-100 p-6 flex items-start gap-4">
         <BarChart3 size={20} className="text-indigo-500 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-indigo-800 font-medium">
-          <strong>หมายเหตุ:</strong> ผลโหวตจะถูกบันทึกสะสมใน localStorage ของเครื่อง สามารถดูสถิติรวมใน tab Analytics ได้
+          <strong>หมายเหตุ:</strong> วิดีโอทุกตัวใช้เสียงเดียวกัน (ปิดเสียง) เพื่อเน้นการเปรียบเทียบการขยับปากของแต่ละโมเดล
+          ผลโหวตบันทึกใน localStorage สามารถดูสถิติรวมใน tab Analytics ได้
         </p>
       </div>
     </motion.div>
   );
 };
+

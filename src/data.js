@@ -1,6 +1,130 @@
 // ─── Base URL ─────────────────────────────────────────────────────────────────
 export const BASE = '/Voice-Interactive-AI-Avatar-ProjectEVal/videos';
 
+// ─── Models (for Compare Tab) ────────────────────────────────────────────────
+export const compareModels = [
+  {
+    id: 'sadtalker',
+    name: 'SadTalker',
+    shortName: 'SadTalker',
+    venue: 'CVPR 2023',
+    color: 'blue',
+    gradient: 'from-blue-500 to-indigo-600',
+    badgeBg: 'bg-blue-100',
+    badgeText: 'text-blue-800',
+    icon: '🎭',
+    desc: '3DMM + GAN · Mel-CNN encoder',
+  },
+  {
+    id: 'echomimic',
+    name: 'EchoMimic',
+    shortName: 'EchoMimic',
+    venue: 'AAAI 2025',
+    color: 'violet',
+    gradient: 'from-violet-500 to-purple-700',
+    badgeBg: 'bg-violet-100',
+    badgeText: 'text-violet-800',
+    icon: '🌊',
+    desc: 'Latent Video Diffusion · HuBERT',
+  },
+  {
+    id: 'imtalker',
+    name: 'IMTalker',
+    shortName: 'IMTalker',
+    venue: 'arXiv 2025',
+    color: 'rose',
+    gradient: 'from-rose-500 to-pink-600',
+    badgeBg: 'bg-rose-100',
+    badgeText: 'text-rose-800',
+    icon: '🚀',
+    desc: 'Implicit Attention + Flow Matching',
+  },
+];
+
+// ─── Compare Subjects (speaker × clips for model comparison) ─────────────────
+export const compareSubjects = [
+  {
+    id: 'f_baifern', name: 'Baifern', gender: 'Female', genderType: 'female',
+    folder: 'baifern',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_bantita', name: 'Bantita', gender: 'Female', genderType: 'female',
+    folder: 'bantita',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_ped', name: 'Ped', gender: 'Female', genderType: 'female',
+    folder: 'ped',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_pop', name: 'Pop', gender: 'Female', genderType: 'female',
+    folder: 'pop',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_tun', name: 'Tun (F)', gender: 'Female', genderType: 'female',
+    folder: 'tun',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'm_dr_chai', name: 'Dr. Chai', gender: 'Male', genderType: 'male',
+    folder: 'dr_chai',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_warning',    label: 'Warning',          emoji: '⚠️' },
+    ],
+  },
+  {
+    id: 'm_dr_wit', name: 'Dr. Wit', gender: 'Male', genderType: 'male',
+    folder: 'dr_wit',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_warning',    label: 'Warning',          emoji: '⚠️' },
+    ],
+  },
+  {
+    id: 'm_tun', name: 'Tun (M)', gender: 'Male', genderType: 'male',
+    folder: 'tun',
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Intro',       emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_warning',    label: 'Warning',          emoji: '⚠️' },
+    ],
+  },
+];
+
 // ─── Speakers ─────────────────────────────────────────────────────────────────
 export const speakers = [
   {
