@@ -13,9 +13,9 @@ const EXPORT_PASSWORD = import.meta.env.VITE_EXPORT_PASSWORD || 'fuck u';
 
 // ─── ExportModal ──────────────────────────────────────────────────────────────
 export const ExportModal = ({ onClose, data, filename, label }) => {
-  const [pw, setPw]         = useState('');
+  const [pw, setPw] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [error, setError]   = useState('');
+  const [error, setError] = useState('');
   const [unlocked, setUnlocked] = useState(false);
 
   const attempt = (e) => {
@@ -26,15 +26,15 @@ export const ExportModal = ({ onClose, data, filename, label }) => {
 
   const downloadCSV = () => {
     const blob = new Blob([data], { type: 'text/csv' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a'); a.href = url; a.download = filename + '.csv'; a.click();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename + '.csv'; a.click();
     URL.revokeObjectURL(url);
   };
 
   const downloadJSON = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a'); a.href = url; a.download = filename + '.json'; a.click();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename + '.json'; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -104,16 +104,12 @@ export const ExportModal = ({ onClose, data, filename, label }) => {
 
 
 // ─── VideoCard ────────────────────────────────────────────────────────────────
-export const VideoCard = ({ src, label, emoji, videoRef: externalRef }) => {
-  const internalRef = useRef(null);
+export const VideoCard = ({ src, label, emoji }) => {
+  const videoRef = useRef(null);
   const [muted, setMuted] = useState(false);
-  const setRef = (el) => {
-    internalRef.current = el;
-    if (typeof externalRef === 'function') externalRef(el);
-  };
   return (
     <div className="relative rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-white/5 group/video aspect-video">
-      <video ref={setRef} src={src} controls muted={muted} className="w-full h-full object-cover" preload="metadata" />
+      <video ref={videoRef} src={src} controls muted={muted} className="w-full h-full object-cover" preload="metadata" />
       <div className="absolute top-3 left-3 pointer-events-none">
         <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
           <span>{emoji}</span> {label}
@@ -147,13 +143,12 @@ export const RatingRow = ({ speakerId, clipSlug, modelId, metric, value, onChang
         <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-tight">{metric.desc}</span>
       </div>
       <div className="grid grid-cols-5 gap-2">
-        {[1,2,3,4,5].map(val => (
+        {[1, 2, 3, 4, 5].map(val => (
           <button key={val} type="button" onClick={() => onChange(rk, val)}
-            className={`h-14 rounded-2xl font-black text-xl transition-all border-2 ${
-              value === val
+            className={`h-14 rounded-2xl font-black text-xl transition-all border-2 ${value === val
                 ? `${cols.active} text-white scale-105 shadow-xl`
                 : `bg-white border-slate-100 text-slate-300 ${cols.hover} hover:shadow-lg`
-            }`}>{val}</button>
+              }`}>{val}</button>
         ))}
       </div>
       <div className="flex justify-between text-[10px] text-slate-300 font-bold px-1">
@@ -185,11 +180,10 @@ export const SyncVideoCard = ({ src, speaker, isWinner, voted, rank, videoRef: e
   };
 
   return (
-    <motion.div layout className={`relative rounded-3xl overflow-hidden bg-slate-900 border-2 transition-all duration-500 ${
-      isWinner ? 'border-amber-400 shadow-2xl shadow-amber-200/60 scale-[1.02]'
-      : voted ? 'border-slate-700 opacity-60'
-      : 'border-white/10 hover:border-white/30 hover:shadow-xl'
-    }`}>
+    <motion.div layout className={`relative rounded-3xl overflow-hidden bg-slate-900 border-2 transition-all duration-500 ${isWinner ? 'border-amber-400 shadow-2xl shadow-amber-200/60 scale-[1.02]'
+        : voted ? 'border-slate-700 opacity-60'
+          : 'border-white/10 hover:border-white/30 hover:shadow-xl'
+      }`}>
       {isWinner && (
         <motion.div initial={{ scale: 0, y: -20 }} animate={{ scale: 1, y: 0 }}
           className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
@@ -223,10 +217,66 @@ export const SyncVideoCard = ({ src, speaker, isWinner, voted, rank, videoRef: e
   );
 };
 
+// ─── EvalVideoCard (with external ref for sync play) ──────────────────────────
+const EvalVideoCard = ({ src, model, videoRef: externalRef }) => {
+  const internalRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const setRef = (el) => {
+    internalRef.current = el;
+    if (typeof externalRef === 'function') externalRef(el);
+  };
+  const toggle = () => {
+    const v = internalRef.current; if (!v) return;
+    if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
+  };
+  const reset = () => {
+    const v = internalRef.current; if (!v) return;
+    v.currentTime = 0; v.pause(); setPlaying(false);
+  };
+
+  return (
+    <motion.div layout className="relative rounded-3xl overflow-hidden bg-slate-900 border border-white/10 hover:border-white/30 transition-all duration-500">
+      {/* Model badge */}
+      <div className="absolute top-3 left-3 z-10">
+        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-${model.color}-500/90 text-white flex items-center gap-1.5 backdrop-blur-sm shadow`}>
+          <span>{model.icon}</span> {model.name}
+        </span>
+      </div>
+      {/* Venue badge */}
+      <div className="absolute top-3 right-3 z-10">
+        <span className="text-[9px] font-bold text-white/60 bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">{model.venue}</span>
+      </div>
+
+      {/* Video */}
+      <div className="aspect-video bg-slate-950">
+        <video ref={setRef} src={src} muted playsInline
+          className="w-full h-full object-cover"
+          preload="metadata"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+        />
+      </div>
+
+      {/* Controls overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
+        <div className="flex gap-2">
+          <button onClick={toggle} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
+            {playing ? <Pause size={14} fill="white" /> : <Play size={14} fill="white" />}
+          </button>
+          <button onClick={reset} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
+            <RotateCcw size={14} />
+          </button>
+        </div>
+        <span className="text-white/50 text-[10px] font-bold">🔇 Muted</span>
+      </div>
+    </motion.div>
+  );
+};
+
 // ─── EvaluationTab ────────────────────────────────────────────────────────────
 export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, totalRequired }) => {
   const [selectedSubject, setSelectedSubject] = useState(speakers[0].id);
-  const [selectedClip,    setSelectedClip]    = useState('01_opening');
+  const [selectedClip,    setSelectedClip]    = useState(speakers[0].clips[0].slug);
   const videoRefs = useRef({});
 
   const subject = speakers.find(s => s.id === selectedSubject);
@@ -246,10 +296,15 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
   const pauseAll = () => Object.values(videoRefs.current).forEach(v => v?.pause());
   const resetAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.pause(); } });
 
+  // Count rated cells for the current clip
+  const ratedInClip = subject && clip
+    ? compareModels.filter(m => metrics.every(mt => ratings[`${subject.id}__${clip.slug}__${m.id}__${mt.key}`])).length
+    : 0;
+
   return (
-    <motion.div key="eval" initial="hidden" animate="visible" exit="hidden"
-      variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
-      className="space-y-8">
+    <motion.div key="eval" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-8">
+
+      {/* Success toast */}
       <AnimatePresence>
         {submitted && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
@@ -259,37 +314,66 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
         )}
       </AnimatePresence>
 
-      {/* Header */}
+      {/* ── Header ── */}
       <header className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-5"><ClipboardCheck size={120} className="text-indigo-500" /></div>
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <BarChart3 size={120} className="text-indigo-500" />
+        </div>
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div>
             <div className="flex items-center gap-3 text-indigo-600 font-bold text-xs mb-3 uppercase tracking-widest">
-              <SlidersHorizontal size={15} /><span>Absolute MOS Evaluation</span><Star size={13} fill="currentColor" />
+              <SlidersHorizontal size={15} />
+              <span>MOS Evaluation · All Models · Per Clip</span>
+              <Star size={13} fill="currentColor" />
             </div>
             <h1 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Full Evaluation</h1>
-            <p className="text-slate-500 mt-3 text-base font-medium">ประเมินทุกโมเดลพร้อมกันผ่าน UI ควบคุมเดียว (Play All)</p>
+            <p className="text-slate-500 mt-3 text-base font-medium">
+              ให้คะแนน MOS ทุกโมเดลสำหรับแต่ละคลิป — เลือก Speaker &amp; Clip แล้วกด Play All
+            </p>
+            {clip && (
+              <div className="flex items-center gap-2 mt-3">
+                <span className="text-xs font-black text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">
+                  {ratedInClip}/{compareModels.length} models rated in this clip
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex gap-3">
-            <button type="button" onClick={playAll} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">
+            <button type="button" onClick={playAll}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">
               <Play size={16} fill="white" /> Play All
             </button>
-            <button type="button" onClick={pauseAll} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
+            <button type="button" onClick={pauseAll}
+              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
               <Pause size={16} /> Pause
             </button>
-            <button type="button" onClick={resetAll} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
+            <button type="button" onClick={resetAll}
+              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
               <RotateCcw size={16} /> Reset
             </button>
           </div>
         </div>
       </header>
 
-      {/* Speaker selector */}
+      {/* ── Model Legend Bar ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {compareModels.map(m => (
+          <div key={m.id} className={`flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r ${m.gradient} text-white shadow-lg`}>
+            <span className="text-2xl">{m.icon}</span>
+            <div>
+              <div className="font-black text-sm">{m.name}</div>
+              <div className="text-white/70 text-[10px] font-semibold">{m.venue}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Speaker Selector ── */}
       <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">
           <User size={12} className="inline mr-1.5 mb-0.5" />Select Speaker
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {speakers.map(s => (
             <button key={s.id} type="button" onClick={() => changeSubject(s.id)}
               className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl font-black text-xs transition-all ${
@@ -309,62 +393,86 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
         </div>
       </div>
 
-      {/* Clip selector */}
+      {/* ── Clip Selector ── */}
       {subject && (
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Select Clip Scenario</p>
           <div className="flex flex-wrap gap-3">
-            {subject.clips.map(c => (
-              <button key={c.slug} type="button" onClick={() => changeClip(c.slug)}
-                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${
-                  selectedClip === c.slug
-                    ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-200'
-                    : 'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200'
-                }`}>
-                <span>{c.emoji}</span> {c.label}
-              </button>
-            ))}
+            {subject.clips.map(c => {
+              const allRated = compareModels.every(m => metrics.every(mt => ratings[`${subject.id}__${c.slug}__${m.id}__${mt.key}`]));
+              return (
+                <button key={c.slug} type="button" onClick={() => changeClip(c.slug)}
+                  className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${
+                    selectedClip === c.slug
+                      ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-200'
+                      : allRated
+                        ? 'bg-emerald-50 text-emerald-700 border-2 border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200'
+                  }`}>
+                  <span>{c.emoji}</span> {c.label}
+                  {allRated && <CheckCircle2 size={12} className="text-emerald-500" />}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Grid of Models */}
+      {/* ── 4-Model Grid + Rating rows ── */}
       <form onSubmit={onSubmit}>
         {subject && clip && (
-          <div className="bg-slate-50/60 rounded-[2rem] border border-slate-100 p-8 space-y-8 mb-24">
-            <div className="flex items-center gap-4">
-              <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest">{clip.emoji} {clip.label}</h4>
-              <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase tracking-widest">{clip.slug}.mp4</span>
+          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 mb-28 space-y-8">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow ${subject.gender === 'Male' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-pink-500 to-rose-500'}`}>
+                <User size={18} />
+              </div>
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{subject.name}</div>
+                <h2 className="font-black text-lg text-slate-900">{clip.emoji} {clip.label}</h2>
+              </div>
+              <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase">{clip.slug}.mp4</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-4">
+
+            {/* Video row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
               {compareModels.map(model => (
-                <div key={model.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-${model.color}-100 text-${model.color}-700 flex items-center gap-1.5`}>
-                      <span>{model.icon}</span> {model.name}
-                    </span>
-                  </div>
-                  <div className="p-4 flex-grow space-y-6">
-                    <VideoCard 
-                      src={`${subject.path}/${model.id}/${clip.slug}.mp4`} 
-                      label={model.name} emoji={model.icon} 
-                      videoRef={(el) => videoRefs.current[model.id] = el}
-                    />
-                    <div className="space-y-4 pt-4 border-t border-slate-100">
-                      {metrics.map(metric => (
-                        <RatingRow key={metric.key} speakerId={subject.id} clipSlug={clip.slug} modelId={model.id}
-                          metric={metric} value={ratings[`${subject.id}__${clip.slug}__${model.id}__${metric.key}`]}
-                          onChange={onRate} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <EvalVideoCard
+                  key={model.id}
+                  src={`${subject.path}/${model.id}/${clip.slug}.mp4`}
+                  model={model}
+                  videoRef={(el) => { videoRefs.current[model.id] = el; }}
+                />
               ))}
+            </div>
+
+            {/* Rating sections — one per model */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 pt-4 border-t border-slate-100">
+              {compareModels.map(model => {
+                const allDone = metrics.every(mt => ratings[`${subject.id}__${clip.slug}__${model.id}__${mt.key}`]);
+                return (
+                  <div key={model.id} className={`rounded-3xl border p-5 space-y-4 transition-all ${allDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-100 bg-slate-50/50'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className={`text-xs font-black uppercase tracking-wide text-${model.color}-600 flex items-center gap-1.5`}>
+                        <span>{model.icon}</span> {model.name}
+                      </span>
+                      {allDone && <CheckCircle2 size={14} className="text-emerald-500" />}
+                    </div>
+                    {metrics.map(metric => (
+                      <RatingRow key={metric.key}
+                        speakerId={subject.id} clipSlug={clip.slug} modelId={model.id}
+                        metric={metric}
+                        value={ratings[`${subject.id}__${clip.slug}__${model.id}__${metric.key}`]}
+                        onChange={onRate}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* Floating submit bar */}
+        {/* ── Floating submit bar ── */}
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-50">
           <div className="bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] p-5 shadow-2xl border border-white/10 flex items-center justify-between gap-6">
             <div className="flex items-center gap-5 pl-2">
@@ -382,7 +490,8 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
                 <p className="text-xs font-bold text-white">{Object.keys(ratings).length}/{totalRequired} ratings</p>
               </div>
             </div>
-            <button type="submit" className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-10 py-4 rounded-2xl font-black shadow-xl flex items-center gap-3 transition-all active:scale-95">
+            <button type="submit"
+              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white px-10 py-4 rounded-2xl font-black shadow-xl flex items-center gap-3 transition-all active:scale-95">
               <span>Submit Batch</span><ChevronRight size={17} />
             </button>
           </div>
@@ -411,19 +520,18 @@ const ModelVideoCard = ({ src, model, isWinner, voted, rank, videoRef: externalR
   };
 
   const colorMap = {
-    blue:   { ring: 'border-blue-400',   shadow: 'shadow-blue-200/60',   badge: 'bg-blue-600',   winner: 'shadow-blue-200' },
+    blue: { ring: 'border-blue-400', shadow: 'shadow-blue-200/60', badge: 'bg-blue-600', winner: 'shadow-blue-200' },
     violet: { ring: 'border-violet-400', shadow: 'shadow-violet-200/60', badge: 'bg-violet-600', winner: 'shadow-violet-200' },
-    rose:   { ring: 'border-rose-400',   shadow: 'shadow-rose-200/60',   badge: 'bg-rose-600',   winner: 'shadow-rose-200' },
+    rose: { ring: 'border-rose-400', shadow: 'shadow-rose-200/60', badge: 'bg-rose-600', winner: 'shadow-rose-200' },
   };
   const c = colorMap[model.color] || colorMap.blue;
 
   return (
-    <motion.div layout className={`relative rounded-3xl overflow-hidden bg-slate-900 border-2 transition-all duration-500 ${
-      isWinner
+    <motion.div layout className={`relative rounded-3xl overflow-hidden bg-slate-900 border-2 transition-all duration-500 ${isWinner
         ? `${c.ring} shadow-2xl ${c.shadow} scale-[1.02]`
         : voted ? 'border-slate-700 opacity-60'
-        : 'border-white/10 hover:border-white/30 hover:shadow-xl'
-    }`}>
+          : 'border-white/10 hover:border-white/30 hover:shadow-xl'
+      }`}>
       {isWinner && (
         <motion.div initial={{ scale: 0, y: -20 }} animate={{ scale: 1, y: 0 }}
           className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
@@ -481,13 +589,13 @@ const ModelVideoCard = ({ src, model, isWinner, voted, rank, videoRef: externalR
 // ─── CompareTab ───────────────────────────────────────────────────────────────
 export const CompareTab = ({ voteHistory, onVote }) => {
   const [selectedSubject, setSelectedSubject] = useState(compareSubjects[0].id);
-  const [selectedClip,    setSelectedClip]    = useState('01_opening');
-  const [voted,  setVoted]  = useState(false);
+  const [selectedClip, setSelectedClip] = useState('01_opening');
+  const [voted, setVoted] = useState(false);
   const [winner, setWinner] = useState(null);
   const videoRefs = useRef({});
 
   const subject = compareSubjects.find(s => s.id === selectedSubject);
-  const clip    = subject?.clips.find(c => c.slug === selectedClip);
+  const clip = subject?.clips.find(c => c.slug === selectedClip);
 
   const changeSubject = (id) => {
     Object.values(videoRefs.current).forEach(v => v?.pause());
@@ -500,7 +608,7 @@ export const CompareTab = ({ voteHistory, onVote }) => {
     Object.values(videoRefs.current).forEach(v => v?.pause());
     setSelectedClip(slug); setVoted(false); setWinner(null);
   };
-  const playAll  = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.play(); } });
+  const playAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.play(); } });
   const pauseAll = () => Object.values(videoRefs.current).forEach(v => v?.pause());
   const resetAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.pause(); } });
 
@@ -570,13 +678,12 @@ export const CompareTab = ({ voteHistory, onVote }) => {
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
           {compareSubjects.map(s => (
             <button key={s.id} onClick={() => changeSubject(s.id)}
-              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl font-black text-xs transition-all ${
-                selectedSubject === s.id
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl font-black text-xs transition-all ${selectedSubject === s.id
                   ? s.gender === 'Female'
                     ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-200'
                     : 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200'
                   : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}>
+                }`}>
               <span className="text-lg">{s.gender === 'Female' ? '👩' : '👨'}</span>
               <span>{s.name}</span>
               <span className={`text-[9px] font-semibold ${selectedSubject === s.id ? 'text-white/70' : 'text-slate-400'}`}>
@@ -594,11 +701,10 @@ export const CompareTab = ({ voteHistory, onVote }) => {
           <div className="flex flex-wrap gap-3">
             {subject.clips.map(c => (
               <button key={c.slug} onClick={() => changeClip(c.slug)}
-                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${
-                  selectedClip === c.slug
+                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${selectedClip === c.slug
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-200'
                     : 'bg-slate-50 text-slate-600 hover:bg-amber-50 hover:text-amber-700 border border-slate-200'
-                }`}>
+                  }`}>
                 <span>{c.emoji}</span> {c.label}
               </button>
             ))}
