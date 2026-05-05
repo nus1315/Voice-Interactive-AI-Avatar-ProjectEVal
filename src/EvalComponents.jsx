@@ -633,7 +633,7 @@ export const CompareTab = ({ voteHistory, onVote }) => {
       </header>
 
       {/* Model legend bar */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {compareModels.map(m => (
           <div key={m.id} className={`flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-r ${m.gradient} text-white shadow-lg`}>
             <span className="text-2xl">{m.icon}</span>
