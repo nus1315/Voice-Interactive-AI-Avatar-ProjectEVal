@@ -218,21 +218,19 @@ export const SyncVideoCard = ({ src, speaker, isWinner, voted, rank, videoRef: e
 };
 
 // ─── EvalVideoCard (with external ref for sync play) ──────────────────────────
-const EvalVideoCard = ({ src, model, videoRef: externalRef }) => {
+const EvalVideoCard = ({ src, model, audioFallbackSrc, videoRef: externalRef }) => {
   const internalRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef(null);
+  
   const setRef = (el) => {
     internalRef.current = el;
     if (typeof externalRef === 'function') externalRef(el);
   };
-  const toggle = () => {
-    const v = internalRef.current; if (!v) return;
-    if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
-  };
-  const reset = () => {
-    const v = internalRef.current; if (!v) return;
-    v.currentTime = 0; v.pause(); setPlaying(false);
-  };
+
+  // Sync fallback audio with native video controls
+  const handlePlay = () => { if (audioRef.current) audioRef.current.play(); };
+  const handlePause = () => { if (audioRef.current) audioRef.current.pause(); };
+  const handleSeek = () => { if (audioRef.current && internalRef.current) audioRef.current.currentTime = internalRef.current.currentTime; };
 
   return (
     <motion.div layout className="relative rounded-3xl overflow-hidden bg-slate-900 border border-white/10 hover:border-white/30 transition-all duration-500">
@@ -248,15 +246,18 @@ const EvalVideoCard = ({ src, model, videoRef: externalRef }) => {
       </div>
 
       {/* Video */}
-      <div className="aspect-video bg-slate-950">
+      <div className="aspect-video bg-slate-950 relative">
         <video ref={setRef} src={src} playsInline controls
           className="w-full h-full object-cover"
           preload="metadata"
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
+          onPlay={handlePlay}
+          onPause={handlePause}
+          onSeeked={handleSeek}
         />
+        {audioFallbackSrc && (
+          <audio ref={audioRef} src={audioFallbackSrc} preload="metadata" />
+        )}
       </div>
-
     </motion.div>
   );
 };
@@ -415,6 +416,7 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
                     <EvalVideoCard
                       src={`${subject.path}/${model.id}/${clip.slug}.mp4`}
                       model={model}
+                      audioFallbackSrc={model.id === 'echomimic' ? `${subject.path}/ditto/${clip.slug}.mp4` : null}
                       videoRef={(el) => { videoRefs.current[model.id] = el; }}
                     />
                     <div className={`flex-grow rounded-3xl border p-5 space-y-4 transition-all ${allDone ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-100 bg-slate-50/50'}`}>
