@@ -141,7 +141,8 @@ export const AnalyticsTab = ({
       {!stats ? (
         <div className="bg-white rounded-[4rem] p-32 border border-slate-200 text-center shadow-sm">
           <BarChart3 size={72} className="mx-auto mb-8 text-slate-100" strokeWidth={1} />
-          <p className="text-slate-300 font-black text-lg uppercase tracking-[0.3em]">No Data Yet</p>
+          <p className="text-slate-300 font-black text-lg uppercase tracking-[0.3em]">No Evaluation Data Yet</p>
+          <p className="text-slate-400 font-medium text-sm mt-2">Submit MOS ratings in the Evaluation tab to see statistics.</p>
         </div>
       ) : (
         <div className="space-y-10">
@@ -211,67 +212,76 @@ export const AnalyticsTab = ({
               </table>
             </div>
           </div>
-
-          {/* Bottom: submission count + export */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden flex flex-col justify-end min-h-[280px] border border-white/5">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -mr-20 -mt-20" />
-              <div className="relative z-10">
-                <p className="font-black text-indigo-400 uppercase text-[10px] tracking-[0.4em] mb-4">Submissions</p>
-                <h2 className="text-[8rem] font-black tracking-tighter leading-[0.8] mb-4">{history.length}</h2>
-                <p className="text-indigo-100 font-bold opacity-60">Total evaluation sessions stored locally.</p>
-              </div>
-            </div>
-
-            {/* Export — Admin Only */}
-            {isAdmin ? (
-              <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm relative group overflow-hidden flex flex-col justify-between">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-violet-600 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out" />
-                <div className="relative z-10 transition-colors duration-500 group-hover:text-white">
-                  <h4 className="font-black mb-4 flex items-center gap-3 text-xl">
-                    <Download size={24} className="text-indigo-600 group-hover:text-white transition-colors" />
-                    Admin Export
-                  </h4>
-                  <p className="text-xs opacity-80 mb-6 font-bold leading-relaxed border-l-4 border-indigo-100 group-hover:border-white/20 pl-4 transition-all">
-                    ส่งออกข้อมูลทั้งหมดเป็น CSV/JSON หรือเชื่อมต่อกับ Google Sheets
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => setExportType('eval')}
-                      disabled={history.length === 0}
-                      className="w-full bg-slate-100 group-hover:bg-white/10 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40"
-                    >
-                      <BarChart3 size={16} /> Export MOS Data (Eval)
-                    </button>
-                    <button
-                      onClick={() => setExportType('compare')}
-                      disabled={!voteHistory || voteHistory.length === 0}
-                      className="w-full bg-slate-100 group-hover:bg-white/10 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40"
-                    >
-                      <ShieldCheck size={16} /> Export Vote Data (Compare)
-                    </button>
-                  </div>
-                </div>
-                <div className="relative z-10 mt-6 pt-6 border-t border-slate-100 group-hover:border-white/20">
-                  <a href="https://docs.google.com/spreadsheets/d/1itf6Hj9SkUT0Xcea_Unj8mtkF_SCSoRLMoG5vpV_g7I/edit?usp=sharing" target="_blank" rel="noreferrer"
-                     className="flex items-center justify-center gap-2 text-xs font-black text-indigo-600 group-hover:text-indigo-200 hover:underline">
-                    <Eye size={14} /> View Master Google Sheet
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-slate-50 p-12 rounded-[3rem] border border-slate-200 border-dashed flex flex-col items-center justify-center text-center opacity-70">
-                <Lock size={32} className="text-slate-300 mb-4" />
-                <h4 className="font-black text-slate-500 mb-2">Export Locked</h4>
-                <p className="text-xs text-slate-400 font-bold max-w-[200px]">
-                  Please login as Admin to export datasets.
-                </p>
-              </div>
-            )}
-          </div>
         </div>
       )}
+
+      {/* Bottom: submission count + export (Always visible so you can export votes even if no MOS data) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden flex flex-col justify-end min-h-[280px] border border-white/5">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[80px] -mr-20 -mt-20" />
+          <div className="relative z-10">
+            <p className="font-black text-indigo-400 uppercase text-[10px] tracking-[0.4em] mb-4">Total Interactions</p>
+            <div className="flex gap-8 mb-4">
+              <div>
+                <h2 className="text-6xl font-black tracking-tighter leading-[0.8] mb-2">{history.length}</h2>
+                <p className="text-indigo-100 font-bold opacity-60 text-xs uppercase tracking-widest">Eval Sessions</p>
+              </div>
+              <div className="w-px bg-white/10" />
+              <div>
+                <h2 className="text-6xl font-black tracking-tighter leading-[0.8] mb-2">{voteHistory?.length || 0}</h2>
+                <p className="text-indigo-100 font-bold opacity-60 text-xs uppercase tracking-widest">Compare Votes</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Export — Admin Only */}
+        {isAdmin ? (
+          <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm relative group overflow-hidden flex flex-col justify-between">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-violet-600 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out" />
+            <div className="relative z-10 transition-colors duration-500 group-hover:text-white">
+              <h4 className="font-black mb-4 flex items-center gap-3 text-xl">
+                <Download size={24} className="text-indigo-600 group-hover:text-white transition-colors" />
+                Admin Export
+              </h4>
+              <p className="text-xs opacity-80 mb-6 font-bold leading-relaxed border-l-4 border-indigo-100 group-hover:border-white/20 pl-4 transition-all">
+                ส่งออกข้อมูลทั้งหมดเป็น CSV/JSON หรือเชื่อมต่อกับ Google Sheets
+              </p>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={() => setExportType('eval')}
+                  disabled={history.length === 0}
+                  className="w-full bg-slate-100 group-hover:bg-white/10 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <BarChart3 size={16} /> Export MOS Data (Eval)
+                </button>
+                <button
+                  onClick={() => setExportType('compare')}
+                  disabled={!voteHistory || voteHistory.length === 0}
+                  className="w-full bg-slate-100 group-hover:bg-white/10 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <ShieldCheck size={16} /> Export Vote Data (Compare)
+                </button>
+              </div>
+            </div>
+            <div className="relative z-10 mt-6 pt-6 border-t border-slate-100 group-hover:border-white/20">
+              <a href="https://docs.google.com/spreadsheets/d/1itf6Hj9SkUT0Xcea_Unj8mtkF_SCSoRLMoG5vpV_g7I/edit?usp=sharing" target="_blank" rel="noreferrer"
+                 className="flex items-center justify-center gap-2 text-xs font-black text-indigo-600 group-hover:text-indigo-200 hover:underline">
+                <Eye size={14} /> View Master Google Sheet
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-50 p-12 rounded-[3rem] border border-slate-200 border-dashed flex flex-col items-center justify-center text-center opacity-70">
+            <Lock size={32} className="text-slate-300 mb-4" />
+            <h4 className="font-black text-slate-500 mb-2">Export Locked</h4>
+            <p className="text-xs text-slate-400 font-bold max-w-[200px]">
+              Please login as Admin to export datasets.
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Export Modal */}
       <AnimatePresence>
