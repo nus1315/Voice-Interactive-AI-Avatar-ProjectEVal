@@ -344,6 +344,7 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
             <div>
               <div className="font-black text-sm">{m.name}</div>
               <div className="text-white/70 text-[10px] font-semibold">{m.venue}</div>
+              <div className="text-white/60 text-[10px] mt-0.5">{m.desc}</div>
             </div>
           </div>
         ))}
