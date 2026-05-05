@@ -104,12 +104,16 @@ export const ExportModal = ({ onClose, data, filename, label }) => {
 
 
 // ─── VideoCard ────────────────────────────────────────────────────────────────
-export const VideoCard = ({ src, label, emoji }) => {
-  const videoRef = useRef(null);
+export const VideoCard = ({ src, label, emoji, videoRef: externalRef }) => {
+  const internalRef = useRef(null);
   const [muted, setMuted] = useState(false);
+  const setRef = (el) => {
+    internalRef.current = el;
+    if (typeof externalRef === 'function') externalRef(el);
+  };
   return (
     <div className="relative rounded-3xl overflow-hidden bg-slate-900 shadow-2xl border border-white/5 group/video aspect-video">
-      <video ref={videoRef} src={src} controls muted={muted} className="w-full h-full object-cover" preload="metadata" />
+      <video ref={setRef} src={src} controls muted={muted} className="w-full h-full object-cover" preload="metadata" />
       <div className="absolute top-3 left-3 pointer-events-none">
         <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
           <span>{emoji}</span> {label}
@@ -221,12 +225,31 @@ export const SyncVideoCard = ({ src, speaker, isWinner, voted, rank, videoRef: e
 
 // ─── EvaluationTab ────────────────────────────────────────────────────────────
 export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, totalRequired }) => {
-  const iv = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
+  const [selectedSubject, setSelectedSubject] = useState(speakers[0].id);
+  const [selectedClip,    setSelectedClip]    = useState('01_opening');
+  const videoRefs = useRef({});
+
+  const subject = speakers.find(s => s.id === selectedSubject);
+  const clip    = subject?.clips.find(c => c.slug === selectedClip);
+
+  const changeSubject = (id) => {
+    Object.values(videoRefs.current).forEach(v => v?.pause());
+    const subj = speakers.find(s => s.id === id);
+    setSelectedSubject(id);
+    setSelectedClip(subj?.clips[0]?.slug || '01_opening');
+  };
+  const changeClip = (slug) => {
+    Object.values(videoRefs.current).forEach(v => v?.pause());
+    setSelectedClip(slug);
+  };
+  const playAll  = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.play(); } });
+  const pauseAll = () => Object.values(videoRefs.current).forEach(v => v?.pause());
+  const resetAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.pause(); } });
 
   return (
     <motion.div key="eval" initial="hidden" animate="visible" exit="hidden"
       variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
-      className="space-y-10">
+      className="space-y-8">
       <AnimatePresence>
         {submitted && (
           <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -50 }}
@@ -236,57 +259,110 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
         )}
       </AnimatePresence>
 
-
-      <form onSubmit={onSubmit} className="space-y-16">
-        {speakers.map((speaker, sIdx) => (
-          <motion.div key={speaker.id} variants={iv}
-            className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden">
-            <div className={`px-10 py-8 border-b border-slate-100 flex items-center gap-6 ${speaker.gender === 'Male' ? 'bg-blue-50/30' : 'bg-pink-50/30'}`}>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg ${speaker.gender === 'Male' ? 'bg-gradient-to-br from-blue-500 to-blue-700 shadow-blue-100' : 'bg-gradient-to-br from-pink-500 to-rose-600 shadow-pink-100'}`}>
-                <User size={28} strokeWidth={2.5} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Speaker {sIdx + 1}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${speaker.gender === 'Male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>{speaker.gender}</span>
-                </div>
-                <h3 className="text-2xl font-black text-slate-900">{speaker.name}</h3>
-              </div>
+      {/* Header */}
+      <header className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5"><ClipboardCheck size={120} className="text-indigo-500" /></div>
+        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div>
+            <div className="flex items-center gap-3 text-indigo-600 font-bold text-xs mb-3 uppercase tracking-widest">
+              <SlidersHorizontal size={15} /><span>Absolute MOS Evaluation</span><Star size={13} fill="currentColor" />
             </div>
-            <div className="p-10 space-y-14">
-              {speaker.clips.map((clip, cIdx) => (
-                <div key={cIdx} className="bg-slate-50/60 rounded-[2rem] border border-slate-100 p-8 space-y-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-sm font-black shadow">{cIdx + 1}</div>
-                    <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest">{clip.emoji} {clip.label}</h4>
-                    <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase tracking-widest">{clip.slug}.mp4</span>
+            <h1 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Full Evaluation</h1>
+            <p className="text-slate-500 mt-3 text-base font-medium">ประเมินทุกโมเดลพร้อมกันผ่าน UI ควบคุมเดียว (Play All)</p>
+          </div>
+          <div className="flex gap-3">
+            <button type="button" onClick={playAll} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">
+              <Play size={16} fill="white" /> Play All
+            </button>
+            <button type="button" onClick={pauseAll} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
+              <Pause size={16} /> Pause
+            </button>
+            <button type="button" onClick={resetAll} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
+              <RotateCcw size={16} /> Reset
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Speaker selector */}
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">
+          <User size={12} className="inline mr-1.5 mb-0.5" />Select Speaker
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+          {speakers.map(s => (
+            <button key={s.id} type="button" onClick={() => changeSubject(s.id)}
+              className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl font-black text-xs transition-all ${
+                selectedSubject === s.id
+                  ? s.gender === 'Female'
+                    ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-200'
+                    : 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-200'
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}>
+              <span className="text-lg">{s.gender === 'Female' ? '👩' : '👨'}</span>
+              <span>{s.name}</span>
+              <span className={`text-[9px] font-semibold ${selectedSubject === s.id ? 'text-white/70' : 'text-slate-400'}`}>
+                {s.gender}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Clip selector */}
+      {subject && (
+        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">Select Clip Scenario</p>
+          <div className="flex flex-wrap gap-3">
+            {subject.clips.map(c => (
+              <button key={c.slug} type="button" onClick={() => changeClip(c.slug)}
+                className={`flex items-center gap-2.5 px-5 py-3 rounded-2xl font-black text-sm transition-all ${
+                  selectedClip === c.slug
+                    ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-200'
+                    : 'bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200'
+                }`}>
+                <span>{c.emoji}</span> {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grid of Models */}
+      <form onSubmit={onSubmit}>
+        {subject && clip && (
+          <div className="bg-slate-50/60 rounded-[2rem] border border-slate-100 p-8 space-y-8 mb-24">
+            <div className="flex items-center gap-4">
+              <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest">{clip.emoji} {clip.label}</h4>
+              <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase tracking-widest">{clip.slug}.mp4</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-4">
+              {compareModels.map(model => (
+                <div key={model.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                  <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-${model.color}-100 text-${model.color}-700 flex items-center gap-1.5`}>
+                      <span>{model.icon}</span> {model.name}
+                    </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 pt-4">
-                    {compareModels.map(model => (
-                      <div key={model.id} className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase bg-${model.color}-100 text-${model.color}-700 flex items-center gap-1.5`}>
-                            <span>{model.icon}</span> {model.name}
-                          </span>
-                        </div>
-                        <div className="p-4 flex-grow space-y-6">
-                          <VideoCard src={`${speaker.path}/${model.id}/${clip.slug}.mp4`} label={model.name} emoji={model.icon} />
-                          <div className="space-y-4 pt-4 border-t border-slate-100">
-                            {metrics.map(metric => (
-                              <RatingRow key={metric.key} speakerId={speaker.id} clipSlug={clip.slug} modelId={model.id}
-                                metric={metric} value={ratings[`${speaker.id}__${clip.slug}__${model.id}__${metric.key}`]}
-                                onChange={onRate} />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="p-4 flex-grow space-y-6">
+                    <VideoCard 
+                      src={`${subject.path}/${model.id}/${clip.slug}.mp4`} 
+                      label={model.name} emoji={model.icon} 
+                      videoRef={(el) => videoRefs.current[model.id] = el}
+                    />
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                      {metrics.map(metric => (
+                        <RatingRow key={metric.key} speakerId={subject.id} clipSlug={clip.slug} modelId={model.id}
+                          metric={metric} value={ratings[`${subject.id}__${clip.slug}__${model.id}__${metric.key}`]}
+                          onChange={onRate} />
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </motion.div>
-        ))}
+          </div>
+        )}
 
         {/* Floating submit bar */}
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 z-50">
