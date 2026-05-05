@@ -1,5 +1,5 @@
 // ─── Base URL ─────────────────────────────────────────────────────────────────
-export const BASE = '/Voice-Interactive-AI-Avatar-Project/videos';
+export const BASE = '/Voice-Interactive-AI-Avatar-ProjectEVal/videos';
 
 // ─── Speakers ─────────────────────────────────────────────────────────────────
 export const speakers = [
