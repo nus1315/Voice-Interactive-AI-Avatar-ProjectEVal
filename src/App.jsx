@@ -154,6 +154,7 @@ const App = () => {
   const [ratings, setRatings] = useState({});
   const [history, setHistory] = useState([]);
   const [voteHistory, setVoteHistory] = useState([]);
+  const sessionId = useMemo(() => Math.random().toString(36).substring(2, 8).toUpperCase(), []);
 
   // Admin state
   const [isAdmin, setIsAdmin]         = useState(false);
@@ -193,6 +194,7 @@ const App = () => {
     const subjectId = clip.split('__')[0] || '';
     sendDataToGoogleSheet({
       type: 'vote',
+      sessionId,
       timestamp: entry.timestamp,
       clip: clip,
       winner: winnerId,
@@ -216,6 +218,7 @@ const App = () => {
     // Send to Google Sheets
     sendDataToGoogleSheet({
       type: 'eval',
+      sessionId,
       timestamp: entry.timestamp,
       ratings: entry.data
     });
