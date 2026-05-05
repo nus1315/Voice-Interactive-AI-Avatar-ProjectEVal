@@ -557,19 +557,19 @@ const ModelVideoCard = ({ src, model, isWinner, voted, rank, videoRef: externalR
 };
 
 // ─── CompareTab ───────────────────────────────────────────────────────────────
-export const CompareTab = ({ voteHistory, onVote }) => {
-  const [selectedSubject, setSelectedSubject] = useState(compareSubjects[0].id);
-  const [selectedClip, setSelectedClip] = useState('01_opening');
+export const CompareTab = ({ onVote, voteHistory }) => {
+  const [selectedSubject, setSelectedSubject] = useState(speakers[0].id);
+  const [selectedClip, setSelectedClip] = useState(speakers[0].clips[0].slug);
   const [voted, setVoted] = useState(false);
   const [winner, setWinner] = useState(null);
   const videoRefs = useRef({});
 
-  const subject = compareSubjects.find(s => s.id === selectedSubject);
+  const subject = speakers.find(s => s.id === selectedSubject);
   const clip = subject?.clips.find(c => c.slug === selectedClip);
 
   const changeSubject = (id) => {
     Object.values(videoRefs.current).forEach(v => v?.pause());
-    const subj = compareSubjects.find(s => s.id === id);
+    const subj = speakers.find(s => s.id === id);
     setSelectedSubject(id);
     setSelectedClip(subj?.clips[0]?.slug || '01_opening');
     setVoted(false); setWinner(null);
@@ -645,8 +645,8 @@ export const CompareTab = ({ voteHistory, onVote }) => {
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4">
           <User size={12} className="inline mr-1.5 mb-0.5" />Select Speaker
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-          {compareSubjects.map(s => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {speakers.map(s => (
             <button key={s.id} onClick={() => changeSubject(s.id)}
               className={`flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl font-black text-xs transition-all ${selectedSubject === s.id
                   ? s.gender === 'Female'
