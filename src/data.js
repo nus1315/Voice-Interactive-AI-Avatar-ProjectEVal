@@ -39,6 +39,18 @@ export const compareModels = [
     icon: '🚀',
     desc: 'Implicit Attention + Flow Matching',
   },
+  {
+    id: 'ditto',
+    name: 'Ditto',
+    shortName: 'Ditto',
+    venue: 'arXiv Nov 2024',
+    color: 'emerald',
+    gradient: 'from-emerald-500 to-teal-600',
+    badgeBg: 'bg-emerald-100',
+    badgeText: 'text-emerald-800',
+    icon: '⚡',
+    desc: 'Motion-Space Diffusion · HuBERT',
+  },
 ];
 
 // ─── Compare Subjects (speaker × clips for model comparison) ─────────────────

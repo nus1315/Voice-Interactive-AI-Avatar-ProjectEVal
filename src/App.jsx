@@ -316,6 +316,7 @@ const App = () => {
               submitted={submitted}
               progress={progress}
               totalRequired={totalRequired}
+              history={history}
             />
           )}
 

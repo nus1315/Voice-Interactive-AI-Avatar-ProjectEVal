@@ -4,8 +4,103 @@ import {
   Volume2, VolumeX, User, Play, Pause, RotateCcw,
   ThumbsUp, Crown, Star, Trophy, SlidersHorizontal,
   CheckCircle2, ChevronRight, BarChart3,
+  Download, Lock, X, Eye, EyeOff, FileJson, FileText,
 } from 'lucide-react';
 import { speakers, metrics, commonClips, compareModels, compareSubjects, BASE } from './data.js';
+
+// ─── Export password from env ──────────────────────────────────────────────────
+const EXPORT_PASSWORD = import.meta.env.VITE_EXPORT_PASSWORD || 'fuck u';
+
+// ─── ExportModal ──────────────────────────────────────────────────────────────
+export const ExportModal = ({ onClose, data, filename, label }) => {
+  const [pw, setPw]         = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError]   = useState('');
+  const [unlocked, setUnlocked] = useState(false);
+
+  const attempt = (e) => {
+    e.preventDefault();
+    if (pw === EXPORT_PASSWORD) { setUnlocked(true); setError(''); }
+    else { setError('Wrong export password.'); setPw(''); }
+  };
+
+  const downloadCSV = () => {
+    const blob = new Blob([data], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = filename + '.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadJSON = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = filename + '.json'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+      <motion.div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose} />
+      <motion.div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 border border-slate-200"
+        initial={{ opacity: 0, y: 40, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 40 }}>
+        <button onClick={onClose} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors">
+          <X size={20} />
+        </button>
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-200 mb-5">
+            <Download size={28} className="text-white" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900">Export {label}</h2>
+          <p className="text-slate-500 text-sm mt-2 font-medium">กรอกรหัสเพื่อดาวน์โหลดข้อมูล</p>
+        </div>
+
+        {!unlocked ? (
+          <form onSubmit={attempt} className="space-y-5">
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={pw}
+                onChange={e => { setPw(e.target.value); setError(''); }}
+                placeholder="Export password"
+                autoFocus
+                className="w-full bg-slate-50 border-2 border-slate-200 focus:border-indigo-500 outline-none rounded-2xl px-5 py-4 pr-14 text-slate-900 font-bold text-sm transition-colors"
+              />
+              <button type="button" onClick={() => setShowPw(v => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors">
+                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {error && (
+              <div className="flex items-center gap-3 bg-red-50 text-red-700 px-4 py-3 rounded-2xl border border-red-100 text-xs font-bold">
+                <Lock size={14} className="shrink-0" />{error}
+              </div>
+            )}
+            <button type="submit"
+              className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 text-white py-4 rounded-2xl font-black shadow-xl shadow-indigo-200 transition-all active:scale-95">
+              Unlock Export
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 text-emerald-700 text-xs font-bold flex items-center gap-2">
+              <CheckCircle2 size={16} /> ปลดล็อคสำเร็จ — เลือกรูปแบบไฟล์
+            </div>
+            <button onClick={downloadCSV}
+              className="w-full flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-700 text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95">
+              <FileText size={18} /> Download CSV
+            </button>
+            <button onClick={downloadJSON}
+              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:opacity-90 text-white py-4 rounded-2xl font-black shadow-lg transition-all active:scale-95">
+              <FileJson size={18} /> Download JSON
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+};
 
 
 // ─── VideoCard ────────────────────────────────────────────────────────────────
@@ -125,8 +220,24 @@ export const SyncVideoCard = ({ src, speaker, isWinner, voted, rank, videoRef: e
 };
 
 // ─── EvaluationTab ────────────────────────────────────────────────────────────
-export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, totalRequired }) => {
+export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, totalRequired, history }) => {
   const iv = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
+  const [showExport, setShowExport] = useState(false);
+
+  // Build CSV for eval export
+  const buildEvalCSV = () => {
+    if (!history || history.length === 0) return 'No data';
+    let csv = 'Timestamp,SpeakerID,SpeakerName,Gender,Clip,Metric,Score\n';
+    history.forEach(entry => {
+      Object.entries(entry.data).forEach(([key, val]) => {
+        const [sid, clip, mk] = key.split('__');
+        const sp = speakers.find(s => s.id === sid);
+        csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},${mk},${val}\n`;
+      });
+    });
+    return csv;
+  };
+
   return (
     <motion.div key="eval" initial="hidden" animate="visible" exit="hidden"
       variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06 } } }}
@@ -138,7 +249,23 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
             <CheckCircle2 size={24} /><span className="font-bold text-lg">บันทึกผลการประเมินสำเร็จ!</span>
           </motion.div>
         )}
+        {showExport && (
+          <ExportModal
+            onClose={() => setShowExport(false)}
+            data={buildEvalCSV()}
+            filename="V2L_Evaluation_MOS"
+            label="Evaluation Data"
+          />
+        )}
       </AnimatePresence>
+
+      {/* Export button row */}
+      <div className="flex justify-end">
+        <button onClick={() => setShowExport(true)}
+          className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 text-slate-600 px-5 py-3 rounded-2xl font-black text-sm shadow-sm transition-all active:scale-95">
+          <Download size={15} /> Export Results
+        </button>
+      </div>
 
       <form onSubmit={onSubmit} className="space-y-16">
         {speakers.map((speaker, sIdx) => (
@@ -298,7 +425,21 @@ export const CompareTab = ({ voteHistory, onVote }) => {
   const [selectedClip,    setSelectedClip]    = useState('01_opening');
   const [voted,  setVoted]  = useState(false);
   const [winner, setWinner] = useState(null);
+  const [showExport, setShowExport] = useState(false);
   const videoRefs = useRef({});
+
+  // Build vote CSV
+  const buildVoteCSV = () => {
+    if (!voteHistory || voteHistory.length === 0) return 'No votes yet';
+    let csv = 'Clip,SubjectID,SubjectName,Gender,WinnerModel,WinnerName,Timestamp\n';
+    voteHistory.forEach(v => {
+      const [subId, clipSlug] = v.clip.split('__');
+      const subj = compareSubjects.find(s => s.id === subId);
+      const model = compareModels.find(m => m.id === v.winner);
+      csv += `${v.clip},${subId},${subj?.name ?? subId},${subj?.gender ?? ''},${v.winner},${model?.name ?? v.winner},${v.timestamp ?? ''}\n`;
+    });
+    return csv;
+  };
 
   const subject = compareSubjects.find(s => s.id === selectedSubject);
   const clip    = subject?.clips.find(c => c.slug === selectedClip);
@@ -333,6 +474,17 @@ export const CompareTab = ({ voteHistory, onVote }) => {
 
   return (
     <motion.div key="compare" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-8">
+      <AnimatePresence>
+        {showExport && (
+          <ExportModal
+            onClose={() => setShowExport(false)}
+            data={buildVoteCSV()}
+            filename="V2L_Compare_Votes"
+            label="Compare Votes"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5"><Trophy size={120} className="text-amber-500" /></div>
@@ -357,6 +509,9 @@ export const CompareTab = ({ voteHistory, onVote }) => {
             </button>
             <button onClick={resetAll} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
               <RotateCcw size={16} /> Reset
+            </button>
+            <button onClick={() => setShowExport(true)} className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 text-slate-600 px-5 py-3 rounded-2xl font-black text-sm shadow-sm transition-all active:scale-95">
+              <Download size={16} /> Export
             </button>
           </div>
         </div>
@@ -436,8 +591,8 @@ export const CompareTab = ({ voteHistory, onVote }) => {
         </div>
       )}
 
-      {/* 3 model videos side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 4 model videos side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {compareModels.map(model => {
           const isWinner = voted && winner === model.id;
           const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);

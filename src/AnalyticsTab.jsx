@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShieldCheck, Trash2, Lock, Eye, BarChart3, Download, User
 } from 'lucide-react';
 import { speakers, metrics } from './data.js';
+import { ExportModal } from './EvalComponents.jsx';
 
 export const AnalyticsTab = ({
   history,
@@ -14,6 +15,21 @@ export const AnalyticsTab = ({
   const cv = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.08 } },
+  };
+  const [showExport, setShowExport] = useState(false);
+
+  // Build CSV
+  const buildCSV = () => {
+    if (history.length === 0) return 'No data';
+    let csv = 'Timestamp,SpeakerID,SpeakerName,Gender,Clip,Metric,Score\n';
+    history.forEach(entry => {
+      Object.entries(entry.data).forEach(([key, val]) => {
+        const [sid, clip, mk] = key.split('__');
+        const sp = speakers.find(s => s.id === sid);
+        csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},${mk},${val}\n`;
+      });
+    });
+    return csv;
   };
 
   const stats = useMemo(() => {
@@ -186,42 +202,41 @@ export const AnalyticsTab = ({
               </div>
             </div>
 
-            {/* Export — available to everyone */}
+            {/* Export — password protected */}
             <div className="bg-white p-12 rounded-[3rem] border border-slate-200 shadow-sm relative group overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-violet-600 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out" />
               <div className="relative z-10 transition-colors duration-500 group-hover:text-white">
                 <h4 className="font-black mb-6 flex items-center gap-3 text-xl">
                   <Download size={24} className="text-indigo-600 group-hover:text-white transition-colors" />
-                  Export CSV Dataset
+                  Export CSV / JSON Dataset
                 </h4>
                 <p className="text-sm opacity-60 mb-10 font-bold leading-relaxed border-l-4 border-indigo-100 group-hover:border-white/20 pl-6 transition-all">
-                  Download complete MOS data for statistical analysis (ANOVA, P-value, etc.)
+                  ดาวน์โหลด MOS data สำหรับวิเคราะห์ทางสถิติ (ANOVA, P-value ฯลฯ) — ต้องใส่รหัสผ่าน
                 </p>
                 <button
-                  onClick={() => {
-                    let csv = 'Timestamp,SpeakerID,SpeakerName,Gender,Clip,Metric,Score\n';
-                    history.forEach(entry => {
-                      Object.entries(entry.data).forEach(([key, val]) => {
-                        const [sid, clip, mk] = key.split('__');
-                        const sp = speakers.find(s => s.id === sid);
-                        csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},${mk},${val}\n`;
-                      });
-                    });
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = 'V2L_MOS_Results.csv'; a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                  className="w-full bg-slate-100 group-hover:bg-white text-slate-900 py-5 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
+                  onClick={() => setShowExport(true)}
+                  disabled={history.length === 0}
+                  className="w-full bg-slate-100 group-hover:bg-white text-slate-900 py-5 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Download size={18} /> Download V2L_MOS_Results.csv
+                  <Lock size={18} className="text-indigo-600 group-hover:text-indigo-600" /> Export with Password
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Export Modal */}
+      <AnimatePresence>
+        {showExport && (
+          <ExportModal
+            onClose={() => setShowExport(false)}
+            data={buildCSV()}
+            filename="V2L_Analytics_MOS"
+            label="Analytics MOS Data"
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
