@@ -140,7 +140,57 @@ export const compareSubjects = [
 // ─── Speakers ─────────────────────────────────────────────────────────────────
 export const speakers = [
   {
-    id: 'm_chai', name: 'Dr. Chai', gender: 'Male', role: 'Lecturer',
+    id: 'f_baifern', name: 'Baifern', gender: 'Female', role: 'Lecturer',
+    path: `${BASE}/female_teacher/baifern`,
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_bantita', name: 'Bantita', gender: 'Female', role: 'Lecturer',
+    path: `${BASE}/female_teacher/bantita`,
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_ped', name: 'Ped', gender: 'Female', role: 'Lecturer',
+    path: `${BASE}/female_teacher/ped`,
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_pop', name: 'Pop', gender: 'Female', role: 'Lecturer',
+    path: `${BASE}/female_teacher/pop`,
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'f_tun', name: 'Tun (F)', gender: 'Female', role: 'Lecturer',
+    path: `${BASE}/female_teacher/tun`,
+    clips: [
+      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
+      { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
+      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
+      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
+    ],
+  },
+  {
+    id: 'm_dr_chai', name: 'Dr. Chai', gender: 'Male', role: 'Lecturer',
     path: `${BASE}/male_teacher/dr_chai`,
     clips: [
       { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
@@ -150,7 +200,7 @@ export const speakers = [
     ],
   },
   {
-    id: 'm_wit', name: 'Dr. Wit', gender: 'Male', role: 'Lecturer',
+    id: 'm_dr_wit', name: 'Dr. Wit', gender: 'Male', role: 'Lecturer',
     path: `${BASE}/male_teacher/dr_wit`,
     clips: [
       { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
@@ -160,23 +210,13 @@ export const speakers = [
     ],
   },
   {
-    id: 'm_tun', name: 'Tun (Male)', gender: 'Male', role: 'Lecturer',
+    id: 'm_tun', name: 'Tun (M)', gender: 'Male', role: 'Lecturer',
     path: `${BASE}/male_teacher/tun`,
     clips: [
       { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
       { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
       { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
       { slug: '04_warning',    label: 'Warning',          emoji: '⚠️' },
-    ],
-  },
-  {
-    id: 'f_tun', name: 'Tun (Female)', gender: 'Female', role: 'Lecturer',
-    path: `${BASE}/female_teacher/tun`,
-    clips: [
-      { slug: '01_opening',    label: 'Opening',          emoji: '👋' },
-      { slug: '02_math_intro', label: 'Math Introduction', emoji: '📐' },
-      { slug: '03_encourage',  label: 'Encouragement',    emoji: '💪' },
-      { slug: '04_qa',         label: 'Q&A Session',      emoji: '❓' },
     ],
   },
 ];
