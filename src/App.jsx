@@ -334,6 +334,7 @@ const App = () => {
             <AnalyticsTab
               key="summary"
               history={history}
+              voteHistory={voteHistory}
               isAdmin={isAdmin}
               setShowLogin={setShowLogin}
               requestDelete={requestDelete}

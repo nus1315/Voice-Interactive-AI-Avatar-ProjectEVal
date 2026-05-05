@@ -220,23 +220,8 @@ export const SyncVideoCard = ({ src, speaker, isWinner, voted, rank, videoRef: e
 };
 
 // ─── EvaluationTab ────────────────────────────────────────────────────────────
-export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, totalRequired, history }) => {
+export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, totalRequired }) => {
   const iv = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } };
-  const [showExport, setShowExport] = useState(false);
-
-  // Build CSV for eval export
-  const buildEvalCSV = () => {
-    if (!history || history.length === 0) return 'No data';
-    let csv = 'Timestamp,SpeakerID,SpeakerName,Gender,Clip,Metric,Score\n';
-    history.forEach(entry => {
-      Object.entries(entry.data).forEach(([key, val]) => {
-        const [sid, clip, mk] = key.split('__');
-        const sp = speakers.find(s => s.id === sid);
-        csv += `${entry.timestamp},${sid},${sp?.name ?? sid},${sp?.gender ?? ''},${clip},${mk},${val}\n`;
-      });
-    });
-    return csv;
-  };
 
   return (
     <motion.div key="eval" initial="hidden" animate="visible" exit="hidden"
@@ -249,23 +234,8 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
             <CheckCircle2 size={24} /><span className="font-bold text-lg">บันทึกผลการประเมินสำเร็จ!</span>
           </motion.div>
         )}
-        {showExport && (
-          <ExportModal
-            onClose={() => setShowExport(false)}
-            data={buildEvalCSV()}
-            filename="V2L_Evaluation_MOS"
-            label="Evaluation Data"
-          />
-        )}
       </AnimatePresence>
 
-      {/* Export button row */}
-      <div className="flex justify-end">
-        <button onClick={() => setShowExport(true)}
-          className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 text-slate-600 px-5 py-3 rounded-2xl font-black text-sm shadow-sm transition-all active:scale-95">
-          <Download size={15} /> Export Results
-        </button>
-      </div>
 
       <form onSubmit={onSubmit} className="space-y-16">
         {speakers.map((speaker, sIdx) => (
@@ -290,8 +260,9 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
                     <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-sm font-black shadow">{cIdx + 1}</div>
                     <h4 className="font-black text-slate-700 text-sm uppercase tracking-widest">{clip.emoji} {clip.label}</h4>
                     <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase tracking-widest">{clip.slug}.mp4</span>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded-md ml-2">Model: Ditto</span>
                   </div>
-                  <VideoCard src={`${speaker.path}/${clip.slug}.mp4`} label={clip.label} emoji={clip.emoji} />
+                  <VideoCard src={`${speaker.path}/ditto/${clip.slug}.mp4`} label={clip.label} emoji={clip.emoji} />
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
                     {metrics.map(metric => (
                       <RatingRow key={metric.key} speakerId={speaker.id} clipSlug={clip.slug}
@@ -425,21 +396,7 @@ export const CompareTab = ({ voteHistory, onVote }) => {
   const [selectedClip,    setSelectedClip]    = useState('01_opening');
   const [voted,  setVoted]  = useState(false);
   const [winner, setWinner] = useState(null);
-  const [showExport, setShowExport] = useState(false);
   const videoRefs = useRef({});
-
-  // Build vote CSV
-  const buildVoteCSV = () => {
-    if (!voteHistory || voteHistory.length === 0) return 'No votes yet';
-    let csv = 'Clip,SubjectID,SubjectName,Gender,WinnerModel,WinnerName,Timestamp\n';
-    voteHistory.forEach(v => {
-      const [subId, clipSlug] = v.clip.split('__');
-      const subj = compareSubjects.find(s => s.id === subId);
-      const model = compareModels.find(m => m.id === v.winner);
-      csv += `${v.clip},${subId},${subj?.name ?? subId},${subj?.gender ?? ''},${v.winner},${model?.name ?? v.winner},${v.timestamp ?? ''}\n`;
-    });
-    return csv;
-  };
 
   const subject = compareSubjects.find(s => s.id === selectedSubject);
   const clip    = subject?.clips.find(c => c.slug === selectedClip);
@@ -474,17 +431,6 @@ export const CompareTab = ({ voteHistory, onVote }) => {
 
   return (
     <motion.div key="compare" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-8">
-      <AnimatePresence>
-        {showExport && (
-          <ExportModal
-            onClose={() => setShowExport(false)}
-            data={buildVoteCSV()}
-            filename="V2L_Compare_Votes"
-            label="Compare Votes"
-          />
-        )}
-      </AnimatePresence>
-
       {/* Header */}
       <header className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5"><Trophy size={120} className="text-amber-500" /></div>
@@ -509,9 +455,6 @@ export const CompareTab = ({ voteHistory, onVote }) => {
             </button>
             <button onClick={resetAll} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
               <RotateCcw size={16} /> Reset
-            </button>
-            <button onClick={() => setShowExport(true)} className="flex items-center gap-2 bg-white border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 text-slate-600 px-5 py-3 rounded-2xl font-black text-sm shadow-sm transition-all active:scale-95">
-              <Download size={16} /> Export
             </button>
           </div>
         </div>
