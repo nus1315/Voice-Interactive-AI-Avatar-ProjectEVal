@@ -249,7 +249,7 @@ const EvalVideoCard = ({ src, model, videoRef: externalRef }) => {
 
       {/* Video */}
       <div className="aspect-video bg-slate-950">
-        <video ref={setRef} src={src} muted playsInline
+        <video ref={setRef} src={src} playsInline controls
           className="w-full h-full object-cover"
           preload="metadata"
           onPlay={() => setPlaying(true)}
@@ -257,17 +257,14 @@ const EvalVideoCard = ({ src, model, videoRef: externalRef }) => {
         />
       </div>
 
-      {/* Controls overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between">
-        <div className="flex gap-2">
-          <button onClick={toggle} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
-            {playing ? <Pause size={14} fill="white" /> : <Play size={14} fill="white" />}
-          </button>
-          <button onClick={reset} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
-            <RotateCcw size={14} />
-          </button>
-        </div>
-        <span className="text-white/50 text-[10px] font-bold">🔇 Muted</span>
+      {/* Controls overlay bottom-left */}
+      <div className="absolute bottom-3 left-3 z-10 flex gap-2">
+        <button onClick={toggle} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
+          {playing ? <Pause size={14} fill="white" /> : <Play size={14} fill="white" />}
+        </button>
+        <button onClick={reset} className="bg-white/20 hover:bg-white/35 backdrop-blur-sm text-white p-2 rounded-full transition-all">
+          <RotateCcw size={14} />
+        </button>
       </div>
     </motion.div>
   );
@@ -292,9 +289,7 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
     Object.values(videoRefs.current).forEach(v => v?.pause());
     setSelectedClip(slug);
   };
-  const playAll  = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.play(); } });
-  const pauseAll = () => Object.values(videoRefs.current).forEach(v => v?.pause());
-  const resetAll = () => Object.values(videoRefs.current).forEach(v => { if (v) { v.currentTime = 0; v.pause(); } });
+
 
   // Count rated cells for the current clip
   const ratedInClip = subject && clip
@@ -328,7 +323,7 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
             </div>
             <h1 className="text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">Full Evaluation</h1>
             <p className="text-slate-500 mt-3 text-base font-medium">
-              ให้คะแนน MOS ทุกโมเดลสำหรับแต่ละคลิป — เลือก Speaker &amp; Clip แล้วกด Play All
+              ให้คะแนน MOS ทุกโมเดลสำหรับแต่ละคลิป — เลือก Speaker &amp; Clip แล้วประเมิน
             </p>
             {clip && (
               <div className="flex items-center gap-2 mt-3">
@@ -337,20 +332,6 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
                 </span>
               </div>
             )}
-          </div>
-          <div className="flex gap-3">
-            <button type="button" onClick={playAll}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-2xl font-black text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">
-              <Play size={16} fill="white" /> Play All
-            </button>
-            <button type="button" onClick={pauseAll}
-              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
-              <Pause size={16} /> Pause
-            </button>
-            <button type="button" onClick={resetAll}
-              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95">
-              <RotateCcw size={16} /> Reset
-            </button>
           </div>
         </div>
       </header>
@@ -433,8 +414,8 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
               <span className="ml-auto text-[10px] font-bold text-slate-300 uppercase">{clip.slug}.mp4</span>
             </div>
 
-            {/* Video row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            {/* Video row — 2-col for bigger clips */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               {compareModels.map(model => (
                 <EvalVideoCard
                   key={model.id}
@@ -445,8 +426,8 @@ export const EvaluationTab = ({ ratings, onRate, onSubmit, submitted, progress, 
               ))}
             </div>
 
-            {/* Rating sections — one per model */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 pt-4 border-t border-slate-100">
+            {/* Rating sections — 2-col aligned with videos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6 border-t border-slate-100">
               {compareModels.map(model => {
                 const allDone = metrics.every(mt => ratings[`${subject.id}__${clip.slug}__${model.id}__${mt.key}`]);
                 return (
