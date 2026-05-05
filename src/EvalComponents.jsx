@@ -698,8 +698,8 @@ export const CompareTab = ({ onVote, voteHistory }) => {
         </div>
       )}
 
-      {/* 4 model videos side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      {/* 4 model videos side by side (2-col grid) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
         {compareModels.map(model => {
           const isWinner = voted && winner === model.id;
           const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1]);
