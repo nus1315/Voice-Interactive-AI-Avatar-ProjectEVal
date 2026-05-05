@@ -591,8 +591,7 @@ export const CompareTab = ({ onVote, voteHistory }) => {
 
   const modelVideoSrc = (modelId) => {
     if (!subject) return '';
-    const gType = subject.genderType;
-    return `${BASE}/${gType}_teacher/${subject.folder}/${modelId}/${selectedClip}.mp4`;
+    return `${subject.path}/${modelId}/${selectedClip}.mp4`;
   };
 
   return (
