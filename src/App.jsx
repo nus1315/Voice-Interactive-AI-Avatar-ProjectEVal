@@ -19,7 +19,7 @@ import {
   Trophy
 } from 'lucide-react';
 import { speakers, metrics, compareModels } from './data.js';
-import { EvaluationTab, CompareTab } from './EvalComponents.jsx';
+import { EvaluationTab } from './EvalComponents.jsx';
 import { AnalyticsTab } from './AnalyticsTab.jsx';
 import { ResearchTab } from './ResearchTab.jsx';
 
@@ -154,7 +154,6 @@ const App = () => {
   const [rankings, setRankings] = useState({});
   // rankings["speakerId__clipSlug"]["voice"|"visual"|"sync"] = [modelId,...] best→worst
   const [history, setHistory] = useState([]);
-  const [voteHistory, setVoteHistory] = useState([]);
   const sessionId = useMemo(() => Math.random().toString(36).substring(2, 8).toUpperCase(), []);
 
   // Admin state
@@ -181,27 +180,7 @@ const App = () => {
   useEffect(() => {
     const saved = localStorage.getItem('v2l_research_v2');
     if (saved) setHistory(JSON.parse(saved));
-    const savedVotes = localStorage.getItem('v2l_votes_v1');
-    if (savedVotes) setVoteHistory(JSON.parse(savedVotes));
   }, []);
-
-  const handleVote = (clip, winnerId) => {
-    const entry = { clip, winner: winnerId, timestamp: new Date().toLocaleString('th-TH') };
-    const updated = [...voteHistory, entry];
-    setVoteHistory(updated);
-    localStorage.setItem('v2l_votes_v1', JSON.stringify(updated));
-
-    // Send to Google Sheets
-    const subjectId = clip.split('__')[0] || '';
-    sendDataToGoogleSheet({
-      type: 'vote',
-      sessionId,
-      timestamp: entry.timestamp,
-      clip: clip,
-      winner: winnerId,
-      subjectId: subjectId
-    });
-  };
 
   // ── Ranking handlers ─────────────────────────────────────────────────────
   const handleRank = (clipKey, metricKey, orderedIds) =>
@@ -295,7 +274,6 @@ const App = () => {
               {[
                 { id: 'paper',      label: 'Research',   icon: FileText },
                 { id: 'evaluation', label: 'Evaluation', icon: ClipboardCheck },
-                { id: 'compare',    label: 'Compare',    icon: Trophy },
                 { id: 'summary',    label: 'Analytics',  icon: BarChart3 },
               ].map(tab => (
                 <button
@@ -303,9 +281,7 @@ const App = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                     activeTab === tab.id
-                      ? tab.id === 'compare'
-                        ? 'bg-white text-amber-600 shadow-md ring-1 ring-black/5'
-                        : 'bg-white text-indigo-600 shadow-md ring-1 ring-black/5'
+                      ? 'bg-white text-indigo-600 shadow-md ring-1 ring-black/5'
                       : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
@@ -368,12 +344,7 @@ const App = () => {
             />
           )}
 
-          {/* ╔══════════════════════════════╗
-              ║  COMPARE TAB                 ║
-              ╚══════════════════════════════╝ */}
-          {activeTab === 'compare' && (
-            <CompareTab key="compare" voteHistory={voteHistory} onVote={handleVote} />
-          )}
+
 
           {/* ╔══════════════════════════════╗
               ║  ANALYTICS TAB               ║
@@ -382,7 +353,6 @@ const App = () => {
             <AnalyticsTab
               key="summary"
               history={history}
-              voteHistory={voteHistory}
               isAdmin={isAdmin}
               setShowLogin={setShowLogin}
               requestDelete={requestDelete}

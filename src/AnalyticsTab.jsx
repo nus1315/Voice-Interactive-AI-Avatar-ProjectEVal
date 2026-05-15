@@ -8,7 +8,6 @@ import { ExportModal } from './EvalComponents.jsx';
 
 export const AnalyticsTab = ({
   history,
-  voteHistory,
   isAdmin,
   setShowLogin,
   requestDelete
@@ -40,17 +39,7 @@ export const AnalyticsTab = ({
     return csv;
   };
 
-  // Build Compare CSV (Votes)
-  const buildCompareCSV = () => {
-    if (!voteHistory || voteHistory.length === 0) return 'No votes yet';
-    let csv = 'Clip,SubjectID,SubjectName,Gender,WinnerModel,Timestamp\n';
-    voteHistory.forEach(v => {
-      const [subId, clipSlug] = v.clip.split('__');
-      const subj = speakers.find(s => s.id === subId) || { name: subId, gender: '' };
-      csv += `${v.clip},${subId},${subj.name},${subj.gender},${v.winner},${v.timestamp ?? ''}\n`;
-    });
-    return csv;
-  };
+
 
   const stats = useMemo(() => {
     if (history.length === 0) return null;
@@ -226,11 +215,6 @@ export const AnalyticsTab = ({
                 <h2 className="text-6xl font-black tracking-tighter leading-[0.8] mb-2">{history.length}</h2>
                 <p className="text-indigo-100 font-bold opacity-60 text-xs uppercase tracking-widest">Eval Sessions</p>
               </div>
-              <div className="w-px bg-white/10" />
-              <div>
-                <h2 className="text-6xl font-black tracking-tighter leading-[0.8] mb-2">{voteHistory?.length || 0}</h2>
-                <p className="text-indigo-100 font-bold opacity-60 text-xs uppercase tracking-widest">Compare Votes</p>
-              </div>
             </div>
           </div>
         </div>
@@ -255,13 +239,6 @@ export const AnalyticsTab = ({
                   className="w-full bg-slate-100 group-hover:bg-white/10 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <BarChart3 size={16} /> Export MOS Data (Eval)
-                </button>
-                <button
-                  onClick={() => setExportType('compare')}
-                  disabled={!voteHistory || voteHistory.length === 0}
-                  className="w-full bg-slate-100 group-hover:bg-white/10 text-slate-900 group-hover:text-white py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ShieldCheck size={16} /> Export Vote Data (Compare)
                 </button>
               </div>
             </div>
@@ -291,14 +268,6 @@ export const AnalyticsTab = ({
             data={buildEvalCSV()}
             filename="V2L_Evaluation_MOS"
             label="Evaluation MOS Data"
-          />
-        )}
-        {exportType === 'compare' && (
-          <ExportModal
-            onClose={() => setExportType(null)}
-            data={buildCompareCSV()}
-            filename="V2L_Compare_Votes"
-            label="Compare Votes Data"
           />
         )}
       </AnimatePresence>
