@@ -151,7 +151,8 @@ const DeleteConfirmModal = ({ onConfirm, onClose, count }) => (
 const App = () => {
   const [activeTab, setActiveTab] = useState('paper');
   const [submitted, setSubmitted] = useState(false);
-  const [ratings, setRatings] = useState({});
+  const [rankings, setRankings] = useState({});
+  // rankings["speakerId__clipSlug"]["voice"|"visual"|"sync"] = [modelId,...] best→worst
   const [history, setHistory] = useState([]);
   const [voteHistory, setVoteHistory] = useState([]);
   const sessionId = useMemo(() => Math.random().toString(36).substring(2, 8).toUpperCase(), []);
@@ -202,29 +203,39 @@ const App = () => {
     });
   };
 
-  // ── Rating handlers ──────────────────────────────────────────────────────
-  const handleRating = (key, val) => setRatings(prev => ({ ...prev, [key]: val }));
+  // ── Ranking handlers ─────────────────────────────────────────────────────
+  const handleRank = (clipKey, metricKey, orderedIds) =>
+    setRankings(prev => ({ ...prev, [clipKey]: { ...(prev[clipKey] || {}), [metricKey]: orderedIds } }));
 
-  const totalRequired = speakers.reduce((acc, sp) => acc + sp.clips.length * compareModels.length * metrics.length, 0);
-  const progress = (Object.keys(ratings).length / totalRequired) * 100;
+  const RANK_METRIC_KEYS = ['voice', 'sync', 'visual'];
+  const totalClips = speakers.reduce((acc, sp) => acc + sp.clips.length, 0);
+  const completedClips = Object.values(rankings).filter(r =>
+    RANK_METRIC_KEYS.every(k => (r[k] || []).length === compareModels.length)
+  ).length;
+  const progress = (completedClips / totalClips) * 100;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const entry = { timestamp: new Date().toLocaleString('th-TH'), data: { ...ratings } };
+    // Convert rankings → flat rows (1 row per model per clip)
+    const rows = [];
+    Object.entries(rankings).forEach(([clipKey, mr]) => {
+      const [speakerId, clipSlug] = clipKey.split('__');
+      compareModels.forEach(m => {
+        rows.push({
+          speakerId, clipSlug, modelId: m.id,
+          voiceRank:  ((mr.voice  || []).indexOf(m.id) + 1) || '',
+          syncRank:   ((mr.sync   || []).indexOf(m.id) + 1) || '',
+          visualRank: ((mr.visual || []).indexOf(m.id) + 1) || '',
+        });
+      });
+    });
+    const entry = { timestamp: new Date().toLocaleString('th-TH'), sessionId, rows };
     const updated = [...history, entry];
     setHistory(updated);
     localStorage.setItem('v2l_research_v2', JSON.stringify(updated));
-    
-    // Send to Google Sheets
-    sendDataToGoogleSheet({
-      type: 'eval',
-      sessionId,
-      timestamp: entry.timestamp,
-      ratings: entry.data
-    });
-
+    sendDataToGoogleSheet({ type: 'eval_rank', sessionId, timestamp: entry.timestamp, rows });
     setSubmitted(true);
-    setRatings({});
+    setRankings({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => setSubmitted(false), 3500);
   };
@@ -347,13 +358,13 @@ const App = () => {
           {activeTab === 'evaluation' && (
             <EvaluationTab
               key="eval"
-              ratings={ratings}
-              onRate={handleRating}
+              rankings={rankings}
+              onRank={handleRank}
               onSubmit={handleSubmit}
               submitted={submitted}
               progress={progress}
-              totalRequired={totalRequired}
-              history={history}
+              completedClips={completedClips}
+              totalClips={totalClips}
             />
           )}
 
