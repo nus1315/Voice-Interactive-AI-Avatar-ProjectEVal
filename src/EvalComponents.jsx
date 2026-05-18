@@ -523,8 +523,3 @@ export const EvaluationTab = ({ rankings, onRank, onSubmit, submitted, progress,
   );
 };
 
-
-
-  );
-};
-
