@@ -186,11 +186,19 @@ const App = () => {
   const handleRank = (clipKey, metricKey, orderedIds) =>
     setRankings(prev => ({ ...prev, [clipKey]: { ...(prev[clipKey] || {}), [metricKey]: orderedIds } }));
 
-  const RANK_METRIC_KEYS = ['voice', 'sync', 'visual'];
   const totalClips = speakers.reduce((acc, sp) => acc + sp.clips.length, 0);
-  const completedClips = Object.values(rankings).filter(r =>
-    RANK_METRIC_KEYS.every(k => (r[k] || []).length === compareModels.length)
-  ).length;
+  const completedClips = speakers.reduce((acc, sp) => {
+    const finishedCount = sp.clips.filter(c => {
+      const voiceList = rankings[`voice__${c.slug}`]?.voice || [];
+      const cR = rankings[`${sp.id}__${c.slug}`] || {};
+      return (
+        voiceList.length === speakers.length &&
+        (cR.sync || []).length === compareModels.length &&
+        (cR.visual || []).length === compareModels.length
+      );
+    }).length;
+    return acc + finishedCount;
+  }, 0);
   const progress = (completedClips / totalClips) * 100;
 
   const handleSubmit = (e) => {
@@ -198,11 +206,15 @@ const App = () => {
     // Convert rankings → flat rows (1 row per model per clip)
     const rows = [];
     Object.entries(rankings).forEach(([clipKey, mr]) => {
+      if (clipKey.startsWith('voice__')) return; // skip voice rankings
       const [speakerId, clipSlug] = clipKey.split('__');
+      const voiceList = rankings[`voice__${clipSlug}`]?.voice || [];
+      const voiceRankNum = voiceList.indexOf(speakerId) !== -1 ? voiceList.indexOf(speakerId) + 1 : '';
+
       compareModels.forEach(m => {
         rows.push({
           speakerId, clipSlug, modelId: m.id,
-          voiceRank:  ((mr.voice  || []).indexOf(m.id) + 1) || '',
+          voiceRank:  voiceRankNum,
           syncRank:   ((mr.sync   || []).indexOf(m.id) + 1) || '',
           visualRank: ((mr.visual || []).indexOf(m.id) + 1) || '',
         });
