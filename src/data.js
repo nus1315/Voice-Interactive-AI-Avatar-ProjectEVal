@@ -1,5 +1,5 @@
 // ─── Base URL ─────────────────────────────────────────────────────────────────
-export const BASE = '/Voice-Interactive-AI-Avatar-ProjectEval/videos';
+export const BASE = '/Voice-Interactive-AI-Avatar-ProjectEVal/videos';
 
 // ─── Models (for Compare Tab) ────────────────────────────────────────────────
 export const compareModels = [
